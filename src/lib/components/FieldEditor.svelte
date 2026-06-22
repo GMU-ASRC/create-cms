@@ -90,6 +90,20 @@
 	function removeItem(index: number) {
 		container[field.key].splice(index, 1);
 	}
+
+	let dragIndex = $state<number | null>(null);
+
+	function onItemDragStart(index: number) {
+		dragIndex = index;
+	}
+	function onItemDragOver(event: DragEvent, index: number) {
+		event.preventDefault();
+		if (dragIndex === null || dragIndex === index) return;
+		const list = container[field.key];
+		const [moved] = list.splice(dragIndex, 1);
+		list.splice(index, 0, moved);
+		dragIndex = index;
+	}
 </script>
 
 {#snippet req()}
@@ -311,11 +325,31 @@
 	<div>
 		<span class="field-label">{field.label}{@render req()}</span>
 		{#if field.help}<p class="mt-1 text-xs text-muted">{field.help}</p>{/if}
-		<div class="mt-1 space-y-4">
+		<div class="mt-1 space-y-4" role="list">
 			{#each container[field.key] as item, index (index)}
-				<div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+				<div
+					class="rounded-xl border border-slate-200 bg-slate-50 p-4 {dragIndex === index
+						? 'opacity-60'
+						: ''}"
+					ondragover={(event) => onItemDragOver(event, index)}
+					ondrop={() => (dragIndex = null)}
+					ondragend={() => (dragIndex = null)}
+					role="listitem"
+				>
 					<div class="mb-3 flex items-center justify-between">
-						<span class="text-xs font-semibold tracking-wide text-muted uppercase">
+						<span class="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted uppercase">
+							{#if container[field.key].length > 1}
+								<span
+									class="cursor-grab text-slate-400 hover:text-slate-600"
+									draggable="true"
+									ondragstart={() => onItemDragStart(index)}
+									role="button"
+									tabindex="-1"
+									aria-label="Drag to reorder"
+								>
+									<Icon icon="mdi:drag-vertical" width="18" />
+								</span>
+							{/if}
 							{field.itemLabel}
 							{index + 1}
 						</span>
