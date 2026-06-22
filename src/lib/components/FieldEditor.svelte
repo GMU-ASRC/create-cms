@@ -5,12 +5,14 @@
 	import ReferenceField from './ReferenceField.svelte';
 	import MemberField from './MemberField.svelte';
 	import MediaPicker from './MediaPicker.svelte';
+	import ImageCropper from './ImageCropper.svelte';
 	import type { Field } from '$lib/schema';
 
 	let { field, container }: { field: Field; container: Record<string, any> } = $props();
 
 	let uploading = $state(false);
 	let uploadError = $state('');
+	let cropFile = $state<File | null>(null);
 
 	const autoSlugFrom = 'autoSlugFrom' in field ? (field.autoSlugFrom ?? '') : '';
 	let slugEdited = $state(Boolean(autoSlugFrom) && Boolean(container[field.key]));
@@ -33,10 +35,7 @@
 		container[field.key] = slugify(container[autoSlugFrom]);
 	});
 
-	async function uploadFile(event: Event) {
-		const input = event.target as HTMLInputElement;
-		const file = input.files?.[0];
-		if (!file) return;
+	async function sendUpload(file: File) {
 		uploading = true;
 		uploadError = '';
 		try {
@@ -50,8 +49,26 @@
 			uploadError = 'Upload failed. Try again.';
 		} finally {
 			uploading = false;
-			input.value = '';
 		}
+	}
+
+	async function uploadFile(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+		if (file) await sendUpload(file);
+	}
+
+	function selectImage(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+		if (file) cropFile = file;
+	}
+
+	function uploadCropped(file: File) {
+		cropFile = null;
+		sendUpload(file);
 	}
 
 	function addString() {
@@ -157,7 +174,7 @@
 				<label class="btn-secondary cursor-pointer">
 					<Icon icon="mdi:upload" width="16" />
 					{uploading ? 'Uploading...' : 'Upload'}
-					<input type="file" accept="image/*" class="hidden" onchange={uploadFile} disabled={uploading} />
+					<input type="file" accept="image/*" class="hidden" onchange={selectImage} disabled={uploading} />
 				</label>
 				{#if container[field.key]}
 					<button
@@ -173,6 +190,9 @@
 		<input class="field-input mt-2" type="text" placeholder="or paste an image path / URL" bind:value={container[field.key]} />
 		{#if field.help}<p class="mt-1 text-xs text-muted">{field.help}</p>{/if}
 		{#if uploadError}<p class="mt-1 text-xs text-red-600">{uploadError}</p>{/if}
+		{#if cropFile}
+			<ImageCropper file={cropFile} onCancel={() => (cropFile = null)} onUpload={uploadCropped} />
+		{/if}
 	</div>
 {:else if field.type === 'date'}
 	<div>
