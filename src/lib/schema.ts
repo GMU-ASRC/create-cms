@@ -94,7 +94,7 @@ export const schemas: Record<string, Field[]> = {
 		{
 			key: 'summary',
 			label: 'Summary',
-			type: 'textarea',
+			type: 'richtext',
 			help: 'Short description shown on the project card and at the top of the project page.'
 		},
 		{ key: 'status', label: 'Status', type: 'select', options: ['Active', 'Completed'] },
