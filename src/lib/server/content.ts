@@ -1,8 +1,23 @@
 import { ObjectId } from 'mongodb';
 import { getDb } from './db';
+import { collections } from '$lib/collections';
 export { collections, getCollectionMeta } from '$lib/collections';
 
 type Document = Record<string, unknown> & { id: string };
+
+export async function usedFileIds(): Promise<Set<string>> {
+	const ids = new Set<string>();
+	for (const collection of collections) {
+		const docs = await listDocuments(collection.key);
+		for (const doc of docs) {
+			const json = JSON.stringify(doc);
+			for (const match of json.matchAll(/\/api\/files\/([a-f0-9]{24})/gi)) {
+				ids.add(match[1]);
+			}
+		}
+	}
+	return ids;
+}
 
 function serialize(doc: Record<string, unknown>): Document {
 	const { _id, ...rest } = doc;

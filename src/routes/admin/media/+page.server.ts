@@ -1,13 +1,15 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { listFiles, uploadFile, deleteFile, isAllowedUpload } from '$lib/server/files';
+import { usedFileIds } from '$lib/server/content';
 import { logActivity } from '$lib/server/activity';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
 		redirect(303, '/login');
 	}
-	return { files: await listFiles() };
+	const [files, used] = await Promise.all([listFiles(), usedFileIds()]);
+	return { files: files.map((file) => ({ ...file, used: used.has(file.id) })) };
 };
 
 export const actions: Actions = {

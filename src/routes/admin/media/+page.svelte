@@ -44,6 +44,15 @@
 		copiedId = id;
 		setTimeout(() => (copiedId = ''), 1500);
 	}
+
+	function confirmDelete(event: SubmitEvent, file: { filename: string; used?: boolean }) {
+		const message = file.used
+			? `"${file.filename}" is used somewhere in the CMS. Deleting it will break those references. Delete anyway?`
+			: `Delete "${file.filename}"?`;
+		if (!confirm(message)) {
+			event.preventDefault();
+		}
+	}
 </script>
 
 <svelte:head><title>Media | CREATE CMS</title></svelte:head>
@@ -133,6 +142,23 @@
 					</div>
 				{/if}
 				<p class="mt-3 truncate text-sm font-medium" title={file.filename}>{file.filename}</p>
+				{#if file.used}
+					<span
+						class="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-gmu-green"
+						title="Referenced somewhere in the CMS"
+					>
+						<Icon icon="mdi:link-variant" width="13" />
+						In use
+					</span>
+				{:else}
+					<span
+						class="mt-1 inline-flex w-fit items-center gap-1 text-xs text-slate-400"
+						title="Not referenced anywhere in the CMS"
+					>
+						<Icon icon="mdi:link-variant-off" width="13" />
+						Unused
+					</span>
+				{/if}
 				<button
 					type="button"
 					onclick={() => copyPath(file.id)}
@@ -142,7 +168,12 @@
 					<Icon icon={copiedId === file.id ? 'mdi:check' : 'mdi:content-copy'} width="14" class="shrink-0" />
 					<span class="truncate">{copiedId === file.id ? 'Copied' : `/api/files/${file.id}`}</span>
 				</button>
-				<form method="POST" action="?/delete" class="mt-3 border-t border-slate-100 pt-3">
+				<form
+					method="POST"
+					action="?/delete"
+					class="mt-3 border-t border-slate-100 pt-3"
+					onsubmit={(event) => confirmDelete(event, file)}
+				>
 					<input type="hidden" name="id" value={file.id} />
 					<button class="flex items-center gap-1 text-xs font-medium text-red-600 hover:underline">
 						<Icon icon="mdi:trash-can-outline" width="14" />
