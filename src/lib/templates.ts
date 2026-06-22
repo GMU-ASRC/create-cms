@@ -58,7 +58,7 @@ export const templates: Record<string, unknown> = {
 		bio: '',
 		education: [''],
 		email: '',
-		socials: [{ kind: 'scholar', href: '' }],
+		socials: [{ kind: 'scholar', href: '', icon: '' }],
 		order: 0
 	},
 	sponsors: { name: '', image: '', order: 0 }

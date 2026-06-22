@@ -1,6 +1,8 @@
 import { publicationTypeLabels } from './publications';
 
-export type Field =
+export type FieldCondition = { field: string; equals: string | string[] };
+
+export type Field = { showWhen?: FieldCondition; helpLink?: { url: string; label: string } } & (
 	| {
 			key: string;
 			label: string;
@@ -27,9 +29,18 @@ export type Field =
 			template: Record<string, unknown>;
 			required?: boolean;
 			help?: string;
-	  };
+	  }
+);
 
-const socialKinds = ['scholar', 'orcid', 'linkedin', 'researchgate'];
+export function isFieldVisible(field: Field, container: Record<string, unknown>): boolean {
+	if (!field.showWhen) return true;
+	const current = container[field.showWhen.field];
+	return Array.isArray(field.showWhen.equals)
+		? field.showWhen.equals.includes(current as string)
+		: current === field.showWhen.equals;
+}
+
+const socialKinds = ['scholar', 'orcid', 'linkedin', 'researchgate', 'other'];
 
 export const schemas: Record<string, Field[]> = {
 	siteInfo: [
@@ -252,10 +263,18 @@ export const schemas: Record<string, Field[]> = {
 			label: 'Social links',
 			type: 'objectList',
 			itemLabel: 'Link',
-			template: { kind: 'scholar', href: '' },
+			template: { kind: 'scholar', href: '', icon: '' },
 			fields: [
 				{ key: 'kind', label: 'Kind', type: 'select', options: socialKinds },
-				{ key: 'href', label: 'Link', type: 'url' }
+				{ key: 'href', label: 'Link', type: 'url' },
+				{
+					key: 'icon',
+					label: 'Icon',
+					type: 'text',
+					showWhen: { field: 'kind', equals: 'other' },
+					help: 'An Iconify name, e.g. "mdi:github" or "simple-icons:youtube".',
+					helpLink: { url: 'https://icon-sets.iconify.design/', label: 'Browse icons' }
+				}
 			]
 		},
 		{ key: 'order', label: 'Order', type: 'number' }

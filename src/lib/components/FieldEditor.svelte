@@ -7,9 +7,11 @@
 	import MemberField from './MemberField.svelte';
 	import MediaPicker from './MediaPicker.svelte';
 	import ImageCropper from './ImageCropper.svelte';
-	import type { Field } from '$lib/schema';
+	import { isFieldVisible, type Field } from '$lib/schema';
 
 	let { field, container }: { field: Field; container: Record<string, any> } = $props();
+
+	const visible = $derived(isFieldVisible(field, container));
 
 	let uploading = $state(false);
 	let uploadError = $state('');
@@ -94,6 +96,7 @@
 	{#if 'required' in field && field.required}<span class="ml-0.5 text-red-600">*</span>{/if}
 {/snippet}
 
+{#if visible}
 {#if field.type === 'text' || field.type === 'url'}
 	<div>
 		<label class="field-label" for={field.key}>{field.label}{@render req()}</label>
@@ -119,7 +122,21 @@
 				bind:value={container[field.key]}
 			/>
 		{/if}
-		{#if field.help}<p class="mt-1 text-xs text-muted">{field.help}</p>{/if}
+		{#if field.help || field.helpLink}
+			<p class="mt-1 text-xs text-muted">
+				{#if field.help}{field.help}{/if}
+				{#if field.helpLink}
+					<a
+						href={field.helpLink.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="font-medium text-gmu-green hover:underline"
+					>
+						{field.helpLink.label}
+					</a>
+				{/if}
+			</p>
+		{/if}
 	</div>
 {:else if field.type === 'textarea'}
 	<div>
@@ -324,4 +341,5 @@
 			Add {field.itemLabel}
 		</button>
 	</div>
+{/if}
 {/if}
