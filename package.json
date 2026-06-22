@@ -13,18 +13,18 @@
 	},
 	"dependencies": {
 		"@iconify/svelte": "^4.2.0",
-		"@tiptap/core": "^2.11.5",
-		"@tiptap/extension-image": "^2.11.5",
-		"@tiptap/extension-link": "^2.11.5",
-		"@tiptap/extension-placeholder": "^2.11.5",
-		"@tiptap/pm": "^2.11.5",
-		"@tiptap/starter-kit": "^2.11.5",
+		"@tiptap/core": "^2.27.2",
+		"@tiptap/extension-image": "^2.27.2",
+		"@tiptap/extension-link": "^2.27.2",
+		"@tiptap/extension-placeholder": "^2.27.2",
+		"@tiptap/pm": "^2.27.2",
+		"@tiptap/starter-kit": "^2.27.2",
 		"mongodb": "^6.21.0",
-		"svelte-easy-crop": "^4.0.0"
+		"svelte-easy-crop": "^5.0.1"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-vercel": "^5.10.3",
-		"@sveltejs/kit": "^2.65.1",
+		"@sveltejs/kit": "^2.66.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@tailwindcss/forms": "^0.5.11",
 		"@tailwindcss/typography": "^0.5.20",
