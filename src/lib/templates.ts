@@ -61,5 +61,6 @@ export const templates: Record<string, unknown> = {
 		socials: [{ kind: 'scholar', href: '', icon: '' }],
 		order: 0
 	},
-	sponsors: { name: '', image: '', order: 0 }
+	sponsors: { name: '', image: '', order: 0 },
+	gallery: { title: '', image: '', order: 0 }
 };

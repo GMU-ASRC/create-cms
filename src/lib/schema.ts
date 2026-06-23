@@ -14,7 +14,7 @@ export type Field = { showWhen?: FieldCondition; helpLink?: { url: string; label
 	  }
 	| { key: string; label: string; type: 'number'; required?: boolean }
 	| { key: string; label: string; type: 'boolean'; help?: string; default?: boolean }
-	| { key: string; label: string; type: 'select'; options: string[]; required?: boolean }
+	| { key: string; label: string; type: 'select'; options: string[]; help?: string; required?: boolean }
 	| { key: string; label: string; type: 'stringList'; itemLabel?: string; help?: string; required?: boolean }
 	| { key: string; label: string; type: 'references'; help?: string; required?: boolean }
 	| { key: string; label: string; type: 'mediaList'; help?: string; required?: boolean }
@@ -282,6 +282,11 @@ export const schemas: Record<string, Field[]> = {
 	sponsors: [
 		{ key: 'name', label: 'Name', type: 'text', required: true },
 		{ key: 'image', label: 'Logo', type: 'image', required: true },
+		{ key: 'order', label: 'Order', type: 'number' }
+	],
+	gallery: [
+		{ key: 'title', label: 'Title', type: 'text', help: 'Optional caption shown under the image.' },
+		{ key: 'image', label: 'Image', type: 'image', required: true },
 		{ key: 'order', label: 'Order', type: 'number' }
 	]
 };

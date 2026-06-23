@@ -51,6 +51,10 @@ export const listDisplay: Record<string, ListDisplay> = {
 	sponsors: {
 		image: 'image',
 		reorderable: true
+	},
+	gallery: {
+		image: 'image',
+		reorderable: true
 	}
 };
 

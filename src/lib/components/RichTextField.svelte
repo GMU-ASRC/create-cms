@@ -88,7 +88,7 @@
 			const response = await fetch('/admin/upload', { method: 'POST', body });
 			if (response.ok) {
 				const { path } = await response.json();
-				editor?.chain().focus().setImage({ src: path, align: 'center' }).run();
+				editor?.chain().focus().setImage({ src: path, align: 'center' } as { src: string }).run();
 			}
 		} finally {
 			uploading = false;

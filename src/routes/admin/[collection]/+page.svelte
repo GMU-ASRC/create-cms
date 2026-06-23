@@ -188,7 +188,7 @@
 	{#key data.doc}
 		<DocumentForm
 			fields={schemaFor(meta.key)}
-			initial={data.doc ?? {}}
+			initial={(data.doc ?? {}) as Record<string, unknown>}
 			metaKey={meta.key}
 			error={form?.error}
 		/>

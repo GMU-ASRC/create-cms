@@ -12,7 +12,8 @@ export const collections: CollectionMeta[] = [
 	{ key: 'researchArticles', label: 'Research Articles', titleField: 'title' },
 	{ key: 'publications', label: 'Publications', titleField: 'title' },
 	{ key: 'team', label: 'Team', titleField: 'name' },
-	{ key: 'sponsors', label: 'Sponsors', titleField: 'name' }
+	{ key: 'sponsors', label: 'Sponsors', titleField: 'name' },
+	{ key: 'gallery', label: 'Gallery', titleField: 'title' }
 ];
 
 export function getCollectionMeta(key: string): CollectionMeta | undefined {

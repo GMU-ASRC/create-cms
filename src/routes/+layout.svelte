@@ -86,7 +86,7 @@
 	</form>
 {/snippet}
 
-{#if data.user}
+{#if data.user && !page.url.pathname.startsWith('/snapshot/')}
 	<div class="flex min-h-screen">
 		<aside
 			class="sticky top-0 hidden h-screen shrink-0 flex-col self-start bg-gmu-green text-white transition-[width] duration-200 md:flex {collapsed

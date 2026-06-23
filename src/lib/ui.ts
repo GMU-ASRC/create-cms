@@ -7,7 +7,8 @@ export const collectionIcons: Record<string, string> = {
 	team: 'mdi:account-group-outline',
 	sponsors: 'mdi:handshake-outline',
 	media: 'mdi:image-multiple-outline',
-	users: 'mdi:account-key-outline'
+	users: 'mdi:account-key-outline',
+	gallery: 'mdi:view-gallery-outline'
 };
 
 export const collectionTints: Record<string, string> = {
@@ -19,7 +20,8 @@ export const collectionTints: Record<string, string> = {
 	team: 'bg-teal-100 text-teal-700',
 	sponsors: 'bg-indigo-100 text-indigo-700',
 	media: 'bg-cyan-100 text-cyan-700',
-	users: 'bg-slate-200 text-slate-700'
+	users: 'bg-slate-200 text-slate-700',
+	gallery: 'bg-pink-100 text-pink-700'
 };
 
 export function iconFor(key: string): string {

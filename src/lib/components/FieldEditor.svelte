@@ -6,6 +6,7 @@
 	import ReferenceField from './ReferenceField.svelte';
 	import MemberField from './MemberField.svelte';
 	import MediaPicker from './MediaPicker.svelte';
+	import MediaImagePicker from './MediaImagePicker.svelte';
 	import ImageCropper from './ImageCropper.svelte';
 	import { isFieldVisible, type Field } from '$lib/schema';
 
@@ -16,6 +17,12 @@
 	let uploading = $state(false);
 	let uploadError = $state('');
 	let cropFile = $state<File | null>(null);
+	let showMediaPicker = $state(false);
+
+	function pickFromMedia(path: string) {
+		container[field.key] = path;
+		showMediaPicker = false;
+	}
 
 	const autoSlugFrom = $derived('autoSlugFrom' in field ? (field.autoSlugFrom ?? '') : '');
 	let slugEdited = $state(
@@ -210,6 +217,10 @@
 					{uploading ? 'Uploading...' : 'Upload'}
 					<input type="file" accept="image/*" class="hidden" onchange={selectImage} disabled={uploading} />
 				</label>
+				<button type="button" class="btn-secondary" onclick={() => (showMediaPicker = true)}>
+					<Icon icon="mdi:image-search-outline" width="16" />
+					Media library
+				</button>
 				{#if container[field.key]}
 					<button
 						type="button"
@@ -226,6 +237,9 @@
 		{#if uploadError}<p class="mt-1 text-xs text-red-600">{uploadError}</p>{/if}
 		{#if cropFile}
 			<ImageCropper file={cropFile} onCancel={() => (cropFile = null)} onUpload={uploadCropped} />
+		{/if}
+		{#if showMediaPicker}
+			<MediaImagePicker onSelect={pickFromMedia} onClose={() => (showMediaPicker = false)} />
 		{/if}
 	</div>
 {:else if field.type === 'date'}

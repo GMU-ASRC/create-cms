@@ -81,6 +81,31 @@ export async function deleteDocument(key: string, id: string): Promise<void> {
 	await db.collection(key).deleteOne({ _id: new ObjectId(id) });
 }
 
+type GalleryInput = { id?: string; image: string; title?: string };
+
+export async function saveGallery(items: GalleryInput[]): Promise<void> {
+	const db = await getDb();
+	const gallery = db.collection('gallery');
+	const keepIds = new Set<string>();
+	for (let index = 0; index < items.length; index++) {
+		const item = items[index];
+		const data = { image: item.image, title: item.title ?? '', order: index };
+		if (item.id) {
+			await gallery.updateOne({ _id: new ObjectId(item.id) }, { $set: data });
+			keepIds.add(item.id);
+		} else {
+			const result = await gallery.insertOne(data);
+			keepIds.add(result.insertedId.toString());
+		}
+	}
+	const existing = await gallery.find({}, { projection: { _id: 1 } }).toArray();
+	for (const doc of existing) {
+		if (!keepIds.has(doc._id.toString())) {
+			await gallery.deleteOne({ _id: doc._id });
+		}
+	}
+}
+
 export async function reorderDocuments(key: string, ids: string[]): Promise<void> {
 	const db = await getDb();
 	const collection = db.collection(key);

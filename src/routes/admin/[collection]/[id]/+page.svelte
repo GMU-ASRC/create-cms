@@ -22,7 +22,7 @@
 <h1 class="page-title mt-2">{isNew ? `New ${meta.label}` : `Edit ${meta.label}`}</h1>
 
 {#key data.doc}
-	<DocumentForm {fields} initial={data.doc} metaKey={meta.key} error={form?.error} />
+	<DocumentForm {fields} initial={data.doc as Record<string, unknown>} metaKey={meta.key} error={form?.error} />
 {/key}
 
 {#if !isNew}
