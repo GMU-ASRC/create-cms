@@ -8,7 +8,25 @@
 	let copiedLink = $state('');
 	let copiedSnapshot = $state('');
 	let capturing = $state(false);
+	let uploadingFile = $state(false);
+	let dropActive = $state(false);
+	let droppedName = $state('');
+	let fileInput: HTMLInputElement;
 	let filter = $state<'all' | 'image' | 'pdf' | 'links' | 'snapshots'>('all');
+
+	function isExternalUrl(value: string): boolean {
+		return /^https?:\/\//i.test(value);
+	}
+
+	function handleDrop(event: DragEvent) {
+		event.preventDefault();
+		dropActive = false;
+		const files = event.dataTransfer?.files;
+		if (files && files.length > 0) {
+			fileInput.files = files;
+			droppedName = files[0].name;
+		}
+	}
 
 	const filters = [
 		{ key: 'all', label: 'All' },
@@ -254,6 +272,60 @@
 		</button>
 	</form>
 
+	<form
+		method="POST"
+		action="?/uploadSnapshot"
+		enctype="multipart/form-data"
+		use:enhance={() => {
+			uploadingFile = true;
+			return async ({ update }) => {
+				await update();
+				uploadingFile = false;
+				droppedName = '';
+			};
+		}}
+		class="card mt-3 flex flex-col gap-3 p-4"
+	>
+		<label
+			class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors {dropActive
+				? 'border-gmu-green bg-gmu-green-light'
+				: 'border-slate-300 hover:border-gmu-green/60'}"
+			ondragover={(event) => {
+				event.preventDefault();
+				dropActive = true;
+			}}
+			ondragleave={() => (dropActive = false)}
+			ondrop={handleDrop}
+		>
+			<input
+				bind:this={fileInput}
+				name="snapshotFile"
+				type="file"
+				accept="text/html,.html,.htm,image/*,application/pdf,.pdf"
+				required
+				class="hidden"
+				onchange={() => (droppedName = fileInput.files?.[0]?.name ?? '')}
+			/>
+			<Icon icon="mdi:cloud-upload-outline" width="32" class="text-gmu-green" />
+			{#if droppedName}
+				<p class="text-sm font-medium text-slate-700">{droppedName}</p>
+			{:else}
+				<p class="text-sm font-medium text-slate-700">
+					Drag and drop an HTML, image, or PDF file here
+				</p>
+				<p class="text-xs text-muted">or click to browse</p>
+			{/if}
+		</label>
+		<button class="btn-secondary w-full shrink-0 sm:w-auto sm:self-end" disabled={uploadingFile}>
+			<Icon
+				icon={uploadingFile ? 'mdi:loading' : 'mdi:file-upload-outline'}
+				width="18"
+				class={uploadingFile ? 'animate-spin' : ''}
+			/>
+			{uploadingFile ? 'Uploading...' : 'Upload'}
+		</button>
+	</form>
+
 	{#if form?.snapshotError}
 		<p class="alert-error mt-3">{form.snapshotError}</p>
 	{/if}
@@ -273,15 +345,19 @@
 								{snapshot.title}
 							</p>
 							<p class="truncate text-xs text-muted">
-								<a
-									href={snapshot.url}
-									target="_blank"
-									rel="noopener noreferrer"
-									class="hover:text-gmu-green hover:underline"
-									title={snapshot.url}
-								>
-									{snapshot.url}
-								</a>
+								{#if isExternalUrl(snapshot.url)}
+									<a
+										href={snapshot.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="hover:text-gmu-green hover:underline"
+										title={snapshot.url}
+									>
+										{snapshot.url}
+									</a>
+								{:else}
+									<span title={snapshot.url}>{snapshot.url}</span>
+								{/if}
 								· {formatTime(snapshot.capturedAt)} · {formatSize(snapshot.size)}
 							</p>
 						</div>

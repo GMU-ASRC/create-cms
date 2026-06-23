@@ -7,8 +7,11 @@ export type SnapshotMeta = {
 	url: string;
 	title: string;
 	size: number;
+	contentType: string;
 	capturedAt: Date;
 };
+
+const htmlContentType = 'text/html; charset=utf-8';
 
 const userAgent =
 	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
@@ -98,12 +101,57 @@ async function inlineImages(html: string, pageUrl: string, limit = 60): Promise<
 	return html;
 }
 
+function looksLikeBotChallenge(html: string): boolean {
+	return /Protected by Anubis|making sure you're not a bot|unusual traffic from your computer network|please enable javascript on your web browser/i.test(
+		html
+	);
+}
+
 function stripScripts(html: string): string {
 	return html
 		.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
 		.replace(/<script\b[^>]*\/>/gi, '')
 		.replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
 		.replace(/\son\w+\s*=\s*'[^']*'/gi, '');
+}
+
+function sanitizeHtml(html: string): string {
+	return stripScripts(html)
+		.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '')
+		.replace(/<(object|embed|applet)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+		.replace(/<(object|embed|applet)\b[^>]*\/?>/gi, '')
+		.replace(/<meta\b[^>]*http-equiv\s*=\s*['"]?\s*refresh[^>]*>/gi, '')
+		.replace(/<link\b[^>]*rel\s*=\s*['"]?\s*import[^>]*>/gi, '')
+		.replace(/\s(href|src|action)\s*=\s*(['"])\s*javascript:[^'"]*\2/gi, ' $1="#"')
+		.replace(/\s(href|src|action)\s*=\s*(['"])\s*data:text\/html[^'"]*\2/gi, ' $1="#"');
+}
+
+async function storeSnapshot(
+	url: string,
+	title: string,
+	buffer: Buffer,
+	contentType: string
+): Promise<SnapshotMeta> {
+	const bucket = await snapshotBucket();
+	const fileId = await new Promise<string>((resolve, reject) => {
+		const stream = bucket.openUploadStream('snapshot', { contentType });
+		stream.on('error', reject);
+		stream.on('finish', () => resolve(stream.id.toString()));
+		stream.end(buffer);
+	});
+	const capturedAt = new Date();
+	const db = await getDb();
+	const result = await db
+		.collection('snapshots')
+		.insertOne({ url, title, fileId, size: buffer.length, contentType, capturedAt });
+	return {
+		id: result.insertedId.toString(),
+		url,
+		title,
+		size: buffer.length,
+		contentType,
+		capturedAt
+	};
 }
 
 async function fetchRenderedHtml(targetUrl: string): Promise<string | null> {
@@ -113,7 +161,7 @@ async function fetchRenderedHtml(targetUrl: string): Promise<string | null> {
 	// `timeout` bounds the whole Browserless session so the tab is always
 	// closed and reclaimed, even if the render hangs. The /content endpoint
 	// also closes the page once it returns the rendered HTML.
-	const params = new URLSearchParams({ timeout: '30000' });
+	const params = new URLSearchParams({ timeout: '60000' });
 	if (token) params.set('token', token);
 	const endpoint = `${base.replace(/\/$/, '')}/content?${params.toString()}`;
 	try {
@@ -122,7 +170,8 @@ async function fetchRenderedHtml(targetUrl: string): Promise<string | null> {
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({
 				url: targetUrl,
-				gotoOptions: { waitUntil: 'networkidle0', timeout: 30000 }
+				gotoOptions: { waitUntil: 'networkidle2', timeout: 60000 },
+				waitForTimeout: 8000
 			})
 		});
 		if (!response.ok) return null;
@@ -162,6 +211,10 @@ export async function captureSnapshot(targetUrl: string): Promise<SnapshotMeta> 
 		html = await response.text();
 	}
 
+	if (looksLikeBotChallenge(html)) {
+		throw new Error('The page returned a bot-protection challenge instead of its content, so it was not archived.');
+	}
+
 	const title =
 		(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? '').replace(/\s+/g, ' ').trim() || finalUrl;
 
@@ -170,23 +223,35 @@ export async function captureSnapshot(targetUrl: string): Promise<SnapshotMeta> 
 	html = await inlineImages(html, finalUrl);
 	html = injectBase(html, finalUrl);
 
-	const buffer = Buffer.from(html, 'utf-8');
-	const bucket = await snapshotBucket();
-	const fileId = await new Promise<string>((resolve, reject) => {
-		const stream = bucket.openUploadStream('snapshot.html', {
-			contentType: 'text/html; charset=utf-8'
-		});
-		stream.on('error', reject);
-		stream.on('finish', () => resolve(stream.id.toString()));
-		stream.end(buffer);
-	});
+	return storeSnapshot(finalUrl, title, Buffer.from(html, 'utf-8'), htmlContentType);
+}
 
-	const capturedAt = new Date();
-	const db = await getDb();
-	const result = await db
-		.collection('snapshots')
-		.insertOne({ url: finalUrl, title, fileId, size: buffer.length, capturedAt });
-	return { id: result.insertedId.toString(), url: finalUrl, title, size: buffer.length, capturedAt };
+function titleFromFileName(fileName: string): string {
+	return fileName.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
+}
+
+export async function saveUploadedSnapshot(fileName: string, rawHtml: string): Promise<SnapshotMeta> {
+	if (!rawHtml || !/<\w/.test(rawHtml)) {
+		throw new Error('The uploaded file does not look like an HTML page.');
+	}
+	const html = sanitizeHtml(rawHtml);
+	const title =
+		(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? '').replace(/\s+/g, ' ').trim() ||
+		titleFromFileName(fileName) ||
+		'Uploaded page';
+	return storeSnapshot(fileName, title, Buffer.from(html, 'utf-8'), htmlContentType);
+}
+
+export async function saveUploadedFileSnapshot(
+	fileName: string,
+	buffer: Buffer,
+	contentType: string
+): Promise<SnapshotMeta> {
+	if (buffer.length === 0) {
+		throw new Error('The uploaded file is empty.');
+	}
+	const title = titleFromFileName(fileName) || 'Uploaded file';
+	return storeSnapshot(fileName, title, buffer, contentType);
 }
 
 export async function listSnapshots(): Promise<SnapshotMeta[]> {
@@ -197,6 +262,7 @@ export async function listSnapshots(): Promise<SnapshotMeta[]> {
 		url: String(row.url ?? ''),
 		title: String(row.title ?? ''),
 		size: Number(row.size ?? 0),
+		contentType: String(row.contentType ?? htmlContentType),
 		capturedAt: row.capturedAt instanceof Date ? row.capturedAt : new Date(row.capturedAt)
 	}));
 }
@@ -216,11 +282,14 @@ export async function getSnapshot(id: string): Promise<SnapshotMeta | null> {
 		url: String(row.url ?? ''),
 		title: String(row.title ?? ''),
 		size: Number(row.size ?? 0),
+		contentType: String(row.contentType ?? htmlContentType),
 		capturedAt: row.capturedAt instanceof Date ? row.capturedAt : new Date(row.capturedAt)
 	};
 }
 
-export async function getSnapshotHtml(id: string): Promise<Buffer | null> {
+export async function getSnapshotFile(
+	id: string
+): Promise<{ buffer: Buffer; contentType: string } | null> {
 	let objectId: ObjectId;
 	try {
 		objectId = new ObjectId(id);
@@ -239,13 +308,15 @@ export async function getSnapshotHtml(id: string): Promise<Buffer | null> {
 	const bucket = await snapshotBucket();
 	const files = await bucket.find({ _id: fileObjectId }).toArray();
 	if (files.length === 0) return null;
-	return new Promise((resolve, reject) => {
+	const contentType = String(meta.contentType ?? htmlContentType);
+	const buffer = await new Promise<Buffer>((resolve, reject) => {
 		const chunks: Buffer[] = [];
 		const stream = bucket.openDownloadStream(fileObjectId);
 		stream.on('data', (chunk) => chunks.push(chunk as Buffer));
 		stream.on('error', reject);
 		stream.on('end', () => resolve(Buffer.concat(chunks)));
 	});
+	return { buffer, contentType };
 }
 
 export async function deleteSnapshot(id: string): Promise<void> {

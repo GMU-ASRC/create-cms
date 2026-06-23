@@ -5,6 +5,8 @@
 	let { data } = $props();
 
 	const rawUrl = $derived(`/snapshot/${data.snapshot.id}/raw`);
+	const isImage = $derived(data.snapshot.contentType.startsWith('image/'));
+	const isExternal = $derived(/^https?:\/\//i.test(data.snapshot.url));
 
 	function formatSize(bytes: number): string {
 		if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
@@ -39,15 +41,19 @@
 				</p>
 				<p class="truncate text-xs text-white/70">
 					Archived {formatTime(data.snapshot.capturedAt)} · {formatSize(data.snapshot.size)} ·
-					<a
-						href={data.snapshot.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						class="text-gmu-gold hover:underline"
-						title={data.snapshot.url}
-					>
-						{data.snapshot.url}
-					</a>
+					{#if isExternal}
+						<a
+							href={data.snapshot.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-gmu-gold hover:underline"
+							title={data.snapshot.url}
+						>
+							{data.snapshot.url}
+						</a>
+					{:else}
+						<span title={data.snapshot.url}>{data.snapshot.url}</span>
+					{/if}
 				</p>
 			</div>
 		</div>
@@ -61,22 +67,30 @@
 				<Icon icon="mdi:fullscreen" width="16" />
 				Full screen
 			</a>
-			<a
-				href={data.snapshot.url}
-				target="_blank"
-				rel="noopener noreferrer"
-				class="inline-flex items-center gap-1 text-white/80 hover:text-white"
-			>
-				<Icon icon="mdi:open-in-new" width="16" />
-				Original
-			</a>
+			{#if isExternal}
+				<a
+					href={data.snapshot.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="inline-flex items-center gap-1 text-white/80 hover:text-white"
+				>
+					<Icon icon="mdi:open-in-new" width="16" />
+					Original
+				</a>
+			{/if}
 		</div>
 	</header>
 
-	<iframe
-		src={rawUrl}
-		title={data.snapshot.title}
-		class="w-full flex-1 bg-white"
-		sandbox="allow-same-origin allow-popups"
-	></iframe>
+	{#if isImage}
+		<div class="flex-1 overflow-auto bg-white">
+			<img src={rawUrl} alt={data.snapshot.title} class="block w-full" />
+		</div>
+	{:else}
+		<iframe
+			src={rawUrl}
+			title={data.snapshot.title}
+			class="w-full flex-1 bg-white"
+			sandbox="allow-same-origin allow-popups"
+		></iframe>
+	{/if}
 </div>

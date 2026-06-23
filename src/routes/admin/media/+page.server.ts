@@ -3,7 +3,13 @@ import type { Actions, PageServerLoad } from './$types';
 import { listFiles, uploadFile, deleteFile, isAllowedUpload } from '$lib/server/files';
 import { usedFileIds } from '$lib/server/content';
 import { listLinks, createLink, deleteLink } from '$lib/server/links';
-import { captureSnapshot, listSnapshots, deleteSnapshot } from '$lib/server/snapshots';
+import {
+	captureSnapshot,
+	saveUploadedSnapshot,
+	saveUploadedFileSnapshot,
+	listSnapshots,
+	deleteSnapshot
+} from '$lib/server/snapshots';
 import { logActivity } from '$lib/server/activity';
 
 export const config = { maxDuration: 60 };
@@ -104,6 +110,38 @@ export const actions: Actions = {
 			return fail(400, { snapshotError: (captureError as Error).message });
 		}
 		await logActivity(locals.user.email, 'Captured snapshot', snapshot.url);
+		return { snapshotSuccess: true };
+	},
+	uploadSnapshot: async ({ request, locals }) => {
+		if (!locals.user) {
+			redirect(303, '/login');
+		}
+		const formData = await request.formData();
+		const file = formData.get('snapshotFile');
+		if (!(file instanceof File) || file.size === 0) {
+			return fail(400, { snapshotError: 'Choose a file to upload' });
+		}
+		if (file.size > 25_000_000) {
+			return fail(400, { snapshotError: 'The file is too large (max 25 MB)' });
+		}
+		const isHtml = /text\/html/i.test(file.type) || /\.html?$/i.test(file.name);
+		const isImage = file.type.startsWith('image/');
+		const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+		let snapshot;
+		try {
+			if (isHtml) {
+				snapshot = await saveUploadedSnapshot(file.name, await file.text());
+			} else if (isImage || isPdf) {
+				const buffer = Buffer.from(await file.arrayBuffer());
+				const contentType = file.type || (isPdf ? 'application/pdf' : 'application/octet-stream');
+				snapshot = await saveUploadedFileSnapshot(file.name, buffer, contentType);
+			} else {
+				return fail(400, { snapshotError: 'Only HTML, image, and PDF files are allowed' });
+			}
+		} catch (uploadError) {
+			return fail(400, { snapshotError: (uploadError as Error).message });
+		}
+		await logActivity(locals.user.email, 'Uploaded snapshot', snapshot.title);
 		return { snapshotSuccess: true };
 	},
 	deleteSnapshot: async ({ request, locals }) => {
