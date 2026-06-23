@@ -256,7 +256,19 @@ export const schemas: Record<string, Field[]> = {
 			type: 'richtext',
 			help: "Shown on the member's profile page. Optional."
 		},
-		{ key: 'education', label: 'Education', type: 'stringList', itemLabel: 'Line' },
+		{
+			key: 'education',
+			label: 'Education',
+			type: 'objectList',
+			itemLabel: 'Degree',
+			template: { degree: '', institution: '', years: '' },
+			help: 'Each entry shows on the website as the degree, the institution, and the years.',
+			fields: [
+				{ key: 'degree', label: 'Degree', type: 'text', placeholder: 'e.g. B.S., Electrical Engineering' },
+				{ key: 'institution', label: 'Institution', type: 'text', placeholder: 'e.g. George Mason University' },
+				{ key: 'years', label: 'Years', type: 'text', placeholder: 'e.g. 2021 or 2018 - 2023' }
+			]
+		},
 		{ key: 'email', label: 'Email (without @gmu.edu)', type: 'text' },
 		{
 			key: 'socials',
@@ -329,9 +341,13 @@ export function ensureShape(doc: Record<string, unknown>, fields: Field[]): Reco
 			doc[field.key] = Array.isArray(current) ? current : [];
 		} else if (field.type === 'objectList') {
 			const list = Array.isArray(current) ? current : [];
-			doc[field.key] = list.map((item) =>
-				ensureShape((item ?? {}) as Record<string, unknown>, field.fields)
-			);
+			const firstFieldKey = field.fields[0]?.key;
+			doc[field.key] = list.map((item) => {
+				if (typeof item === 'string' && firstFieldKey) {
+					return ensureShape({ [firstFieldKey]: item }, field.fields);
+				}
+				return ensureShape((item ?? {}) as Record<string, unknown>, field.fields);
+			});
 		} else if (field.type === 'number') {
 			doc[field.key] = typeof current === 'number' ? current : 0;
 		} else if (field.type === 'boolean') {

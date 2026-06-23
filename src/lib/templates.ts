@@ -56,7 +56,7 @@ export const templates: Record<string, unknown> = {
 		photo: '',
 		note: '',
 		bio: '',
-		education: [''],
+		education: [{ degree: '', institution: '', years: '' }],
 		email: '',
 		socials: [{ kind: 'scholar', href: '', icon: '' }],
 		order: 0

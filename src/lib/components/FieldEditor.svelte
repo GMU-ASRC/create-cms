@@ -140,6 +140,7 @@
 				id={field.key}
 				class="field-input"
 				type={field.type === 'url' ? 'url' : 'text'}
+				placeholder={'placeholder' in field ? (field.placeholder ?? '') : ''}
 				bind:value={container[field.key]}
 			/>
 		{/if}
