@@ -61,6 +61,26 @@
 	function go(target: number) {
 		page = Math.min(totalPages, Math.max(1, target));
 	}
+
+	let dragIndex = $state<number | null>(null);
+
+	function onDragStart(order: number) {
+		dragIndex = order;
+	}
+
+	function onDragOver(event: DragEvent, order: number) {
+		event.preventDefault();
+		if (dragIndex === null || dragIndex === order) return;
+		const current = [...selected];
+		const [moved] = current.splice(dragIndex, 1);
+		current.splice(order, 0, moved);
+		container[fieldKey] = current;
+		dragIndex = order;
+	}
+
+	function onDragEnd() {
+		dragIndex = null;
+	}
 </script>
 
 {#if loading}
@@ -79,9 +99,17 @@
 				{#each selectedImages() as image, order (image.path)}
 					<button
 						type="button"
+						draggable="true"
 						onclick={() => toggle(image.path)}
-						class="group relative h-16 w-16 overflow-hidden rounded-lg border-2 border-gmu-green"
-						title={`${image.filename} (click to remove)`}
+						ondragstart={() => onDragStart(order)}
+						ondragover={(event) => onDragOver(event, order)}
+						ondrop={() => (dragIndex = null)}
+						ondragend={onDragEnd}
+						class="group relative h-16 w-16 cursor-grab overflow-hidden rounded-lg border-2 border-gmu-green {dragIndex ===
+						order
+							? 'opacity-50'
+							: ''}"
+						title={`${image.filename} (drag to reorder, click to remove)`}
 					>
 						<img src={image.path} alt={image.filename} class="h-full w-full bg-white object-cover" />
 						<span class="absolute top-0.5 left-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-gmu-green text-[10px] font-bold text-white shadow">
@@ -157,6 +185,7 @@
 	{/if}
 
 	<p class="mt-2 text-xs text-muted">
-		Click to select or remove. The number shows the order the images appear in.
+		Click to select or remove. Drag the selected images to reorder. The number shows the order the
+		images appear in.
 	</p>
 {/if}
