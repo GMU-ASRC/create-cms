@@ -6,6 +6,8 @@
 	import ReferenceField from './ReferenceField.svelte';
 	import MemberField from './MemberField.svelte';
 	import MediaPicker from './MediaPicker.svelte';
+	import FilePicker from './FilePicker.svelte';
+	import AuthorField from './AuthorField.svelte';
 	import MediaImagePicker from './MediaImagePicker.svelte';
 	import ImageCropper from './ImageCropper.svelte';
 	import { isFieldVisible, type Field } from '$lib/schema';
@@ -296,6 +298,18 @@
 		<span class="field-label">{field.label}{@render req()}</span>
 		{#if field.help}<p class="mt-1 mb-2 text-xs text-muted">{field.help}</p>{/if}
 		<MediaPicker {container} fieldKey={field.key} />
+	</div>
+{:else if field.type === 'files'}
+	<div>
+		<span class="field-label">{field.label}{@render req()}</span>
+		{#if field.help}<p class="mt-1 mb-2 text-xs text-muted">{field.help}</p>{/if}
+		<FilePicker {container} fieldKey={field.key} />
+	</div>
+{:else if field.type === 'author'}
+	<div>
+		<span class="field-label">{field.label}{@render req()}</span>
+		{#if field.help}<p class="mt-1 mb-2 text-xs text-muted">{field.help}</p>{/if}
+		<AuthorField {container} fieldKey={field.key} placeholder={field.placeholder ?? ''} />
 	</div>
 {:else if field.type === 'members'}
 	<div>

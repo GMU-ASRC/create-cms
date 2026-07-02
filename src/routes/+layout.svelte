@@ -2,9 +2,15 @@
 	import './layout.css';
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
+	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
+	import { injectAnalytics } from '@vercel/analytics/sveltekit';
 	import { collections } from '$lib/collections';
 	import { iconFor } from '$lib/ui';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+
+	injectSpeedInsights();
+	injectAnalytics({ mode: dev ? 'development' : 'production' });
 
 	let { children, data } = $props();
 
@@ -41,6 +47,8 @@
 </script>
 
 <svelte:head><link rel="icon" type="image/png" href={logoSrc} /></svelte:head>
+
+<ConfirmDialog />
 
 {#snippet brand(showLabel: boolean)}
 	<a href="/" class="flex items-center gap-2.5">

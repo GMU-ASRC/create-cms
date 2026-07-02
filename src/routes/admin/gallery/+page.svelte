@@ -5,7 +5,19 @@
 
 	let { data, form } = $props();
 
-	type GalleryItem = { id?: string; image: string; title: string };
+	type GalleryItem = { id?: string; image: string; title: string; type?: string };
+
+	const videoExtensions = /\.(mp4|webm|ogg|ogv|mov|m4v)$/i;
+
+	function isVideo(item: { type?: string; image: string }): boolean {
+		if (item.type) return item.type.startsWith('video/');
+		return videoExtensions.test(item.image);
+	}
+
+	function isVideoMedia(media: { contentType: string; path: string }): boolean {
+		if (media.contentType) return media.contentType.startsWith('video/');
+		return videoExtensions.test(media.path);
+	}
 
 	let items = $state<GalleryItem[]>(untrack(() => structuredClone(data.items)));
 	const serialized = $derived(JSON.stringify(items));
@@ -37,7 +49,8 @@
 	function addPicked() {
 		for (const path of picked) {
 			if (!items.some((item) => item.image === path)) {
-				items.push({ image: path, title: '' });
+				const media = data.media.find((entry) => entry.path === path);
+				items.push({ image: path, title: '', type: media?.contentType ?? '' });
 			}
 		}
 		showPicker = false;
@@ -71,7 +84,7 @@
 			const response = await fetch('/admin/upload', { method: 'POST', body });
 			if (!response.ok) throw new Error('Upload failed');
 			const result = await response.json();
-			items.push({ image: result.path, title: '' });
+			items.push({ image: result.path, title: '', type: file.type });
 		} catch {
 			uploadError = 'Upload failed. Try again.';
 		} finally {
@@ -91,7 +104,7 @@
 			<h1 class="page-title">Gallery</h1>
 			<p class="text-sm text-muted">
 				{items.length}
-				{items.length === 1 ? 'image' : 'images'}
+				{items.length === 1 ? 'item' : 'items'}
 			</p>
 		</div>
 	</div>
@@ -103,7 +116,7 @@
 		<label class="btn-secondary cursor-pointer">
 			<Icon icon="mdi:upload" width="18" />
 			{uploading ? 'Uploading...' : 'Upload'}
-			<input type="file" accept="image/*" class="hidden" onchange={onUpload} disabled={uploading} />
+			<input type="file" accept="image/*,video/*" class="hidden" onchange={onUpload} disabled={uploading} />
 		</label>
 	</div>
 </div>
@@ -117,7 +130,7 @@
 	{#if items.length === 0}
 		<div class="card empty-state">
 			<Icon icon="mdi:image-off-outline" width="32" class="text-slate-300" />
-			<p>No images yet. Add from media or upload to start the gallery.</p>
+			<p>No media yet. Add from media or upload to start the gallery.</p>
 		</div>
 	{:else}
 		<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" role="list">
@@ -130,7 +143,14 @@
 					role="listitem"
 				>
 					<div class="group relative">
-						<img src={item.image} alt="" class="h-32 w-full bg-slate-50 object-cover" />
+						{#if isVideo(item)}
+							<video src={item.image} class="h-32 w-full bg-slate-900 object-cover" muted preload="metadata"></video>
+							<span class="pointer-events-none absolute inset-0 flex items-center justify-center text-white/90">
+								<Icon icon="mdi:play-circle-outline" width="32" />
+							</span>
+						{:else}
+							<img src={item.image} alt="" class="h-32 w-full bg-slate-50 object-cover" />
+						{/if}
 						<span
 							class="absolute top-1.5 left-1.5 cursor-grab rounded bg-slate-900/50 p-0.5 text-white"
 							draggable="true"
@@ -186,7 +206,7 @@
 			<div class="border-b border-slate-200 px-4 py-3">
 				<input
 					type="text"
-					placeholder="Search images by filename..."
+					placeholder="Search media by filename..."
 					bind:value={search}
 					class="field-input"
 				/>
@@ -194,11 +214,11 @@
 			<div class="flex-1 overflow-y-auto p-4">
 				{#if data.media.length === 0}
 					<p class="text-sm text-muted">
-						No images uploaded yet. Add some on the
+						No media uploaded yet. Add some on the
 						<a href="/admin/media" class="text-gmu-green hover:underline">Media</a> page.
 					</p>
 				{:else if mediaResults.length === 0}
-					<p class="text-sm text-muted">No images match your search.</p>
+					<p class="text-sm text-muted">No media match your search.</p>
 				{:else}
 					<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
 						{#each mediaResults as image (image.id)}
@@ -212,7 +232,14 @@
 									: 'border-slate-200 hover:border-slate-300'}"
 								title={image.filename}
 							>
-								<img src={image.path} alt={image.filename} class="h-24 w-full bg-slate-50 object-cover" />
+								{#if isVideoMedia(image)}
+									<video src={image.path} class="h-24 w-full bg-slate-900 object-cover" muted preload="metadata"></video>
+									<span class="pointer-events-none absolute inset-0 flex items-center justify-center text-white/90">
+										<Icon icon="mdi:play-circle-outline" width="28" />
+									</span>
+								{:else}
+									<img src={image.path} alt={image.filename} class="h-24 w-full bg-slate-50 object-cover" />
+								{/if}
 								{#if selected}
 									<span class="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-gmu-green text-white shadow">
 										<Icon icon="mdi:check" width="16" />
@@ -230,7 +257,7 @@
 			<div class="flex items-center justify-end gap-3 border-t border-slate-200 px-4 py-3">
 				<button type="button" class="btn-secondary" onclick={() => (showPicker = false)}>Cancel</button>
 				<button type="button" class="btn-primary" disabled={picked.length === 0} onclick={addPicked}>
-					Add {picked.length || ''} image{picked.length === 1 ? '' : 's'}
+					Add {picked.length || ''} item{picked.length === 1 ? '' : 's'}
 				</button>
 			</div>
 		</div>

@@ -8,9 +8,22 @@ export const templates: Record<string, unknown> = {
 		intro: '',
 		heroImages: [],
 		showAccessibility: true,
+		alerts: [],
+		highlights: [],
 		contact: { department: '', address: [''], email: '' }
 	},
-	news: { title: '', date: '', body: '', linkType: 'none', href: '', slug: '', order: 0 },
+	news: {
+		title: '',
+		author: '',
+		date: '',
+		body: '',
+		linkType: 'none',
+		href: '',
+		slug: '',
+		gallery: [],
+		files: [],
+		order: 0
+	},
 	projects: {
 		title: '',
 		summary: '',
@@ -23,6 +36,7 @@ export const templates: Record<string, unknown> = {
 		funding: [],
 		links: [],
 		gallery: [],
+		files: [],
 		relatedPublications: [],
 		linkType: 'page',
 		href: '',
@@ -32,9 +46,12 @@ export const templates: Record<string, unknown> = {
 	researchArticles: {
 		slug: '',
 		title: '',
+		author: '',
 		years: '',
 		image: '',
 		content: '',
+		gallery: [],
+		files: [],
 		relatedPublications: []
 	},
 	publications: {

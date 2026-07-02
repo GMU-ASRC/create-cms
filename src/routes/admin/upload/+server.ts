@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { uploadFile, isAllowedUpload } from '$lib/server/files';
+import { assertStorageLimit } from '$lib/server/storage';
 import { logActivity } from '$lib/server/activity';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -12,8 +13,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!(file instanceof File) || file.size === 0) {
 		error(400, 'No file provided');
 	}
-	if (!isAllowedUpload(file.type)) {
-		error(400, 'Only image and PDF files are allowed');
+	if (!isAllowedUpload(file.type, file.name)) {
+		error(400, 'This file type is not allowed');
+	}
+	try {
+		await assertStorageLimit(file.size);
+	} catch (limitError) {
+		error(413, (limitError as Error).message);
 	}
 	const buffer = Buffer.from(await file.arrayBuffer());
 	const id = await uploadFile(file.name, file.type || 'application/octet-stream', buffer);

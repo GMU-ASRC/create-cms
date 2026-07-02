@@ -1,17 +1,55 @@
-import { GridFSBucket, ObjectId } from 'mongodb';
+import { randomUUID } from 'node:crypto';
 import http from 'node:http';
 import https from 'node:https';
+import {
+	DeleteObjectCommand,
+	GetObjectCommand,
+	PutObjectCommand
+} from '@aws-sdk/client-s3';
 import { getDb } from './db';
+import { s3Client, bucketName } from './storage';
 
-export const allowedUploadHint = 'image/*,application/pdf';
+export const allowedUploadHint = 'Images, video, audio, PDFs, documents, and archives';
 
-export function isAllowedUpload(contentType: string): boolean {
-	return contentType.startsWith('image/') || contentType === 'application/pdf';
+const dangerousExtensions = new Set([
+	'exe', 'msi', 'bat', 'cmd', 'com', 'scr', 'pif', 'cpl', 'jar', 'js', 'mjs',
+	'cjs', 'jse', 'vbs', 'vbe', 'ws', 'wsf', 'wsh', 'ps1', 'psm1', 'sh', 'bash',
+	'zsh', 'apk', 'app', 'dmg', 'pkg', 'deb', 'rpm', 'run', 'bin', 'dll', 'sys',
+	'drv', 'so', 'msc', 'gadget', 'reg', 'lnk', 'hta', 'inf', 'ins', 'isp', 'job',
+	'vb', 'ade', 'adp', 'chm', 'crt', 'der', 'hlp', 'msh', 'scf'
+]);
+
+export function fileExtension(filename: string): string {
+	const dot = filename.lastIndexOf('.');
+	return dot === -1 ? '' : filename.slice(dot + 1).toLowerCase();
 }
 
-async function getBucket() {
+export function isAllowedUpload(contentType: string, filename: string): boolean {
+	return !dangerousExtensions.has(fileExtension(filename));
+}
+
+type FileMeta = {
+	_id: string;
+	filename: string;
+	contentType: string;
+	length: number;
+	uploadDate: Date;
+};
+
+async function getMetaCollection() {
 	const db = await getDb();
-	return new GridFSBucket(db, { bucketName: 'files' });
+	return db.collection<FileMeta>('file_meta');
+}
+
+function extensionFor(filename: string): string {
+	const dot = filename.lastIndexOf('.');
+	if (dot === -1) return '';
+	const ext = filename.slice(dot + 1).toLowerCase();
+	return /^[a-z0-9]{1,8}$/.test(ext) ? `.${ext}` : '';
+}
+
+function newKey(filename: string): string {
+	return `${randomUUID()}${extensionFor(filename)}`;
 }
 
 export async function uploadFile(
@@ -19,13 +57,24 @@ export async function uploadFile(
 	contentType: string,
 	data: Buffer
 ): Promise<string> {
-	const bucket = await getBucket();
-	return new Promise((resolve, reject) => {
-		const stream = bucket.openUploadStream(filename, { contentType });
-		stream.on('error', reject);
-		stream.on('finish', () => resolve(stream.id.toString()));
-		stream.end(data);
+	const key = newKey(filename);
+	await s3Client.send(
+		new PutObjectCommand({
+			Bucket: bucketName,
+			Key: key,
+			Body: data,
+			ContentType: contentType
+		})
+	);
+	const meta = await getMetaCollection();
+	await meta.insertOne({
+		_id: key,
+		filename,
+		contentType,
+		length: data.length,
+		uploadDate: new Date()
 	});
+	return key;
 }
 
 function filenameFromUrl(url: string): string {
@@ -136,34 +185,26 @@ export async function mirrorExternalFile(url: string): Promise<string | null> {
 }
 
 export async function getFile(id: string) {
-	let objectId: ObjectId;
 	try {
-		objectId = new ObjectId(id);
+		const response = await s3Client.send(
+			new GetObjectCommand({ Bucket: bucketName, Key: id })
+		);
+		const bytes = await response.Body?.transformToByteArray();
+		if (!bytes) return null;
+		return {
+			data: Buffer.from(bytes),
+			contentType: response.ContentType || 'application/octet-stream'
+		};
 	} catch {
 		return null;
 	}
-	const bucket = await getBucket();
-	const files = await bucket.find({ _id: objectId }).toArray();
-	if (files.length === 0) return null;
-	const data: Buffer = await new Promise((resolve, reject) => {
-		const chunks: Buffer[] = [];
-		const stream = bucket.openDownloadStream(objectId);
-		stream.on('data', (chunk) => chunks.push(chunk as Buffer));
-		stream.on('error', reject);
-		stream.on('end', () => resolve(Buffer.concat(chunks)));
-	});
-	return {
-		data,
-		contentType: files[0].contentType || 'application/octet-stream'
-	};
 }
 
-
 export async function listFiles() {
-	const bucket = await getBucket();
-	const files = await bucket.find({}).sort({ uploadDate: -1 }).toArray();
+	const meta = await getMetaCollection();
+	const files = await meta.find({}).sort({ uploadDate: -1 }).toArray();
 	return files.map((file) => ({
-		id: file._id.toString(),
+		id: file._id,
 		filename: file.filename,
 		contentType: file.contentType,
 		length: file.length,
@@ -172,6 +213,7 @@ export async function listFiles() {
 }
 
 export async function deleteFile(id: string): Promise<void> {
-	const bucket = await getBucket();
-	await bucket.delete(new ObjectId(id));
+	await s3Client.send(new DeleteObjectCommand({ Bucket: bucketName, Key: id }));
+	const meta = await getMetaCollection();
+	await meta.deleteOne({ _id: id });
 }

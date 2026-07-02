@@ -18,6 +18,8 @@ export type Field = { showWhen?: FieldCondition; helpLink?: { url: string; label
 	| { key: string; label: string; type: 'stringList'; itemLabel?: string; help?: string; required?: boolean }
 	| { key: string; label: string; type: 'references'; help?: string; required?: boolean }
 	| { key: string; label: string; type: 'mediaList'; help?: string; required?: boolean }
+	| { key: string; label: string; type: 'files'; help?: string; required?: boolean }
+	| { key: string; label: string; type: 'author'; help?: string; placeholder?: string; required?: boolean }
 	| { key: string; label: string; type: 'members'; help?: string; required?: boolean }
 	| { key: string; label: string; type: 'group'; fields: Field[]; required?: boolean }
 	| {
@@ -64,6 +66,88 @@ export const schemas: Record<string, Field[]> = {
 			help: 'Show the text size, high contrast, and reduce motion controls in the website footer.'
 		},
 		{
+			key: 'alerts',
+			label: 'Site alerts',
+			type: 'objectList',
+			itemLabel: 'Alert',
+			template: {
+				message: '',
+				level: 'info',
+				link: '',
+				linkText: '',
+				dismissible: true,
+				active: true
+			},
+			help: 'Banners shown at the very top of every page.',
+			fields: [
+				{ key: 'message', label: 'Message', type: 'text', required: true },
+				{
+					key: 'level',
+					label: 'Style',
+					type: 'select',
+					options: ['info', 'warning', 'success', 'error']
+				},
+				{ key: 'link', label: 'Link (optional)', type: 'url' },
+				{ key: 'linkText', label: 'Link text', type: 'text', placeholder: 'Learn more' },
+				{
+					key: 'dismissible',
+					label: 'Allow visitors to dismiss',
+					type: 'boolean',
+					default: true,
+					help: 'If on, a visitor can close the alert and it stays hidden for them.'
+				},
+				{
+					key: 'active',
+					label: 'Active',
+					type: 'boolean',
+					default: true,
+					help: 'Uncheck to hide without deleting.'
+				}
+			]
+		},
+		{
+			key: 'highlights',
+			label: 'Highlights',
+			type: 'objectList',
+			itemLabel: 'Highlight',
+			template: {
+				title: '',
+				body: '',
+				image: '',
+				link: '',
+				linkText: '',
+				location: 'Top of every page',
+				active: true
+			},
+			help: 'Callout boxes shown at a location you choose.',
+			fields: [
+				{ key: 'title', label: 'Title', type: 'text' },
+				{ key: 'body', label: 'Body', type: 'textarea' },
+				{ key: 'image', label: 'Image (optional)', type: 'image' },
+				{ key: 'link', label: 'Link (optional)', type: 'url' },
+				{ key: 'linkText', label: 'Link text', type: 'text', placeholder: 'Learn more' },
+				{
+					key: 'location',
+					label: 'Location',
+					type: 'select',
+					options: [
+						'Top of every page',
+						'Bottom of every page',
+						'Homepage below hero',
+						'Homepage above footer'
+					],
+					help: 'Where on the site this highlight appears.'
+				},
+				{
+					key: 'active',
+					label: 'Active',
+					type: 'boolean',
+					default: true,
+					help: 'Uncheck to hide without deleting.'
+				}
+			]
+		},
+		{
 			key: 'contact',
 			label: 'Contact',
 			type: 'group',
@@ -76,6 +160,7 @@ export const schemas: Record<string, Field[]> = {
 	],
 	news: [
 		{ key: 'title', label: 'Title', type: 'text', required: true },
+		{ key: 'author', label: 'Author', type: 'author', help: 'Optional. Start typing to pick a team member, or enter any name. Shown as the byline for this news entry.' },
 		{ key: 'date', label: 'Date', type: 'date', required: true, help: 'Used to sort news entries, newest first.' },
 		{
 			key: 'body',
@@ -105,6 +190,20 @@ export const schemas: Record<string, Field[]> = {
 			autoSlugFrom: 'title',
 			showWhen: { field: 'linkType', equals: 'article' },
 			help: 'Auto-generated from the title. The URL for this news page, e.g. /news/my-update.'
+		},
+		{
+			key: 'gallery',
+			label: 'Gallery',
+			type: 'mediaList',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'Additional images shown in a gallery on the news article page.'
+		},
+		{
+			key: 'files',
+			label: 'Files',
+			type: 'files',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'Attach documents, datasets, or other downloadable files for this news article.'
 		},
 		{ key: 'order', label: 'Order', type: 'number' }
 	],
@@ -169,6 +268,12 @@ export const schemas: Record<string, Field[]> = {
 			help: 'Additional images shown in a gallery on the project page.'
 		},
 		{
+			key: 'files',
+			label: 'Files',
+			type: 'files',
+			help: 'Attach documents, datasets, or other downloadable files for this project.'
+		},
+		{
 			key: 'relatedPublications',
 			label: 'Related publications',
 			type: 'references',
@@ -201,6 +306,7 @@ export const schemas: Record<string, Field[]> = {
 			help: 'Auto-generated from the title. Must match a project slug.'
 		},
 		{ key: 'title', label: 'Title', type: 'text', required: true },
+		{ key: 'author', label: 'Author', type: 'author', help: 'Optional. Start typing to pick a team member, or enter any name. Shown as the byline for this article.' },
 		{ key: 'years', label: 'Years', type: 'text' },
 		{ key: 'image', label: 'Thumbnail', type: 'image', help: 'Shown on the Research listing cards.' },
 		{
@@ -208,6 +314,18 @@ export const schemas: Record<string, Field[]> = {
 			label: 'Content',
 			type: 'richtext',
 			help: 'Write the article. Use the image button to upload, then the alignment buttons to wrap text around it.'
+		},
+		{
+			key: 'gallery',
+			label: 'Gallery',
+			type: 'mediaList',
+			help: 'Additional images shown in a gallery on the research article page.'
+		},
+		{
+			key: 'files',
+			label: 'Files',
+			type: 'files',
+			help: 'Attach documents, datasets, or other downloadable files for this article.'
 		},
 		{
 			key: 'relatedPublications',
@@ -345,6 +463,7 @@ export function ensureShape(doc: Record<string, unknown>, fields: Field[]): Reco
 			field.type === 'stringList' ||
 			field.type === 'references' ||
 			field.type === 'mediaList' ||
+			field.type === 'files' ||
 			field.type === 'members'
 		) {
 			doc[field.key] = Array.isArray(current) ? current : [];

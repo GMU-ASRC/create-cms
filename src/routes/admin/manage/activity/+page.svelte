@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
+	import { confirmSubmit } from '$lib/confirm';
 
 	let { data, form } = $props();
 
@@ -34,11 +35,13 @@
 		<form
 			method="POST"
 			action="?/clear"
-			onsubmit={(event) => {
-				if (!confirm('Clear the entire activity log? This cannot be undone.')) {
-					event.preventDefault();
-				}
-			}}
+			onsubmit={(event) =>
+				confirmSubmit(event, {
+					title: 'Clear activity log',
+					message: 'Clear the entire activity log? This cannot be undone.',
+					danger: true,
+					confirmLabel: 'Clear log'
+				})}
 		>
 			<button class="flex items-center gap-1 text-xs font-medium text-red-600 hover:underline">
 				<Icon icon="mdi:trash-can-outline" width="16" />

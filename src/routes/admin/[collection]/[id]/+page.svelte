@@ -2,6 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import DocumentForm from '$lib/components/DocumentForm.svelte';
 	import { schemaFor } from '$lib/schema';
+	import { confirmSubmit } from '$lib/confirm';
 
 	let { data, form } = $props();
 
@@ -30,9 +31,13 @@
 		method="POST"
 		action="?/delete"
 		class="mt-8 border-t border-slate-200 pt-6"
-		onsubmit={(event) => {
-			if (!confirm('Delete this entry?')) event.preventDefault();
-		}}
+		onsubmit={(event) =>
+			confirmSubmit(event, {
+				title: 'Delete entry',
+				message: 'Delete this entry? This cannot be undone.',
+				danger: true,
+				confirmLabel: 'Delete'
+			})}
 	>
 		<button class="btn-danger">
 			<Icon icon="mdi:trash-can-outline" width="18" />

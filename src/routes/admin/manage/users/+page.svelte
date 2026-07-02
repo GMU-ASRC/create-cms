@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
+	import { confirmSubmit } from '$lib/confirm';
 
 	let { data, form } = $props();
 </script>
@@ -50,11 +51,12 @@
 						<form
 							method="POST"
 							action="?/transfer"
-							onsubmit={(event) => {
-								if (!confirm(`Transfer ownership to ${user.email}? You will become a regular user.`)) {
-									event.preventDefault();
-								}
-							}}
+							onsubmit={(event) =>
+								confirmSubmit(event, {
+									title: 'Transfer ownership',
+									message: `Transfer ownership to ${user.email}? You will become a regular user.`,
+									confirmLabel: 'Transfer'
+								})}
 						>
 							<input type="hidden" name="id" value={user.id} />
 							<button class="flex items-center gap-1 text-xs font-medium text-gmu-green hover:underline">

@@ -11,7 +11,7 @@ export async function usedFileIds(): Promise<Set<string>> {
 		const docs = await listDocuments(collection.key);
 		for (const doc of docs) {
 			const json = JSON.stringify(doc);
-			for (const match of json.matchAll(/\/api\/files\/([a-f0-9]{24})/gi)) {
+			for (const match of json.matchAll(/\/api\/files\/([a-zA-Z0-9._-]+)/g)) {
 				ids.add(match[1]);
 			}
 		}
@@ -81,7 +81,7 @@ export async function deleteDocument(key: string, id: string): Promise<void> {
 	await db.collection(key).deleteOne({ _id: new ObjectId(id) });
 }
 
-type GalleryInput = { id?: string; image: string; title?: string };
+type GalleryInput = { id?: string; image: string; title?: string; type?: string };
 
 export async function saveGallery(items: GalleryInput[]): Promise<void> {
 	const db = await getDb();
@@ -89,7 +89,7 @@ export async function saveGallery(items: GalleryInput[]): Promise<void> {
 	const keepIds = new Set<string>();
 	for (let index = 0; index < items.length; index++) {
 		const item = items[index];
-		const data = { image: item.image, title: item.title ?? '', order: index };
+		const data = { image: item.image, title: item.title ?? '', type: item.type ?? '', order: index };
 		if (item.id) {
 			await gallery.updateOne({ _id: new ObjectId(item.id) }, { $set: data });
 			keepIds.add(item.id);

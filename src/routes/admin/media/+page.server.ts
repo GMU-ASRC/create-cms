@@ -1,6 +1,7 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { listFiles, uploadFile, deleteFile, isAllowedUpload } from '$lib/server/files';
+import { assertStorageLimit } from '$lib/server/storage';
 import { usedFileIds } from '$lib/server/content';
 import { listLinks, createLink, deleteLink } from '$lib/server/links';
 import {
@@ -37,8 +38,13 @@ export const actions: Actions = {
 		if (!(file instanceof File) || file.size === 0) {
 			return fail(400, { error: 'Choose a file to upload' });
 		}
-		if (!isAllowedUpload(file.type)) {
-			return fail(400, { error: 'Only image and PDF files are allowed' });
+		if (!isAllowedUpload(file.type, file.name)) {
+			return fail(400, { error: 'This file type is not allowed' });
+		}
+		try {
+			await assertStorageLimit(file.size);
+		} catch (limitError) {
+			return fail(413, { error: (limitError as Error).message });
 		}
 		const buffer = Buffer.from(await file.arrayBuffer());
 		await uploadFile(file.name, file.type || 'application/octet-stream', buffer);

@@ -4,9 +4,16 @@
 
 	let { container, fieldKey }: { container: Record<string, any>; fieldKey: string } = $props();
 
-	type MediaImage = { id: string; filename: string; path: string };
+	type MediaImage = { id: string; filename: string; path: string; contentType?: string };
 
 	const pageSize = 12;
+
+	const videoExtensions = /\.(mp4|webm|ogg|ogv|mov|m4v)$/i;
+
+	function isVideo(image: MediaImage): boolean {
+		if (image.contentType) return image.contentType.startsWith('video/');
+		return videoExtensions.test(image.path);
+	}
 
 	let images = $state<MediaImage[]>([]);
 	let loading = $state(true);
@@ -87,7 +94,7 @@
 	<p class="text-sm text-muted">Loading media...</p>
 {:else if images.length === 0}
 	<p class="text-sm text-muted">
-		No images uploaded yet. Add some on the <a href="/admin/media" class="text-gmu-green hover:underline">Media</a> page first.
+		No media uploaded yet. Add some on the <a href="/admin/media" class="text-gmu-green hover:underline">Media</a> page first.
 	</p>
 {:else}
 	{#if selected.length > 0}
@@ -111,7 +118,14 @@
 							: ''}"
 						title={`${image.filename} (drag to reorder, click to remove)`}
 					>
-						<img src={image.path} alt={image.filename} class="h-full w-full bg-white object-cover" />
+						{#if isVideo(image)}
+							<video src={image.path} class="h-full w-full bg-slate-900 object-cover" muted preload="metadata"></video>
+							<span class="pointer-events-none absolute inset-0 flex items-center justify-center text-white/90">
+								<Icon icon="mdi:play-circle-outline" width="20" />
+							</span>
+						{:else}
+							<img src={image.path} alt={image.filename} class="h-full w-full bg-white object-cover" />
+						{/if}
 						<span class="absolute top-0.5 left-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-gmu-green text-[10px] font-bold text-white shadow">
 							{order + 1}
 						</span>
@@ -126,13 +140,13 @@
 
 	<input
 		type="text"
-		placeholder="Search images by filename..."
+		placeholder="Search media by filename..."
 		bind:value={search}
 		class="field-input mb-3"
 	/>
 
 	{#if filtered.length === 0}
-		<p class="text-sm text-muted">No images match your search.</p>
+		<p class="text-sm text-muted">No media match your search.</p>
 	{:else}
 		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
 			{#each visible as image (image.id)}
@@ -145,7 +159,14 @@
 						: 'border-gmu-green'}"
 					title={image.filename}
 				>
-					<img src={image.path} alt={image.filename} class="h-24 w-full bg-slate-50 object-cover" />
+					{#if isVideo(image)}
+						<video src={image.path} class="h-24 w-full bg-slate-900 object-cover" muted preload="metadata"></video>
+						<span class="pointer-events-none absolute inset-0 flex items-center justify-center text-white/90">
+							<Icon icon="mdi:play-circle-outline" width="28" />
+						</span>
+					{:else}
+						<img src={image.path} alt={image.filename} class="h-24 w-full bg-slate-50 object-cover" />
+					{/if}
 					{#if order !== -1}
 						<span class="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-gmu-green text-xs font-bold text-white shadow">
 							{order + 1}
@@ -185,7 +206,7 @@
 	{/if}
 
 	<p class="mt-2 text-xs text-muted">
-		Click to select or remove. Drag the selected images to reorder. The number shows the order the
-		images appear in.
+		Click to select or remove. Drag the selected items to reorder. The number shows the order the
+		items appear in.
 	</p>
 {/if}

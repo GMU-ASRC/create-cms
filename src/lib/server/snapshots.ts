@@ -1,6 +1,9 @@
 import { GridFSBucket, ObjectId } from 'mongodb';
+import { randomUUID } from 'node:crypto';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { env } from '$env/dynamic/private';
 import { getDb } from './db';
+import { s3Client, bucketName, assertStorageLimit } from './storage';
 
 export type SnapshotMeta = {
 	id: string;
@@ -132,18 +135,16 @@ async function storeSnapshot(
 	buffer: Buffer,
 	contentType: string
 ): Promise<SnapshotMeta> {
-	const bucket = await snapshotBucket();
-	const fileId = await new Promise<string>((resolve, reject) => {
-		const stream = bucket.openUploadStream('snapshot', { contentType });
-		stream.on('error', reject);
-		stream.on('finish', () => resolve(stream.id.toString()));
-		stream.end(buffer);
-	});
+	await assertStorageLimit(buffer.length);
+	const s3Key = `snapshots/${randomUUID()}`;
+	await s3Client.send(
+		new PutObjectCommand({ Bucket: bucketName, Key: s3Key, Body: buffer, ContentType: contentType })
+	);
 	const capturedAt = new Date();
 	const db = await getDb();
 	const result = await db
 		.collection('snapshots')
-		.insertOne({ url, title, fileId, size: buffer.length, contentType, capturedAt });
+		.insertOne({ url, title, s3Key, size: buffer.length, contentType, capturedAt });
 	return {
 		id: result.insertedId.toString(),
 		url,
@@ -298,7 +299,20 @@ export async function getSnapshotFile(
 	}
 	const db = await getDb();
 	const meta = await db.collection('snapshots').findOne({ _id: objectId });
-	if (!meta?.fileId) return null;
+	if (!meta) return null;
+	const contentType = String(meta.contentType ?? htmlContentType);
+	if (meta.s3Key) {
+		try {
+			const response = await s3Client.send(
+				new GetObjectCommand({ Bucket: bucketName, Key: String(meta.s3Key) })
+			);
+			const bytes = await response.Body?.transformToByteArray();
+			if (bytes) return { buffer: Buffer.from(bytes), contentType };
+		} catch (s3Error) {
+			console.error(`[snapshot] S3 read failed for ${id} (${String(meta.s3Key)}):`, s3Error);
+		}
+	}
+	if (!meta.fileId) return null;
 	let fileObjectId: ObjectId;
 	try {
 		fileObjectId = new ObjectId(String(meta.fileId));
@@ -308,7 +322,6 @@ export async function getSnapshotFile(
 	const bucket = await snapshotBucket();
 	const files = await bucket.find({ _id: fileObjectId }).toArray();
 	if (files.length === 0) return null;
-	const contentType = String(meta.contentType ?? htmlContentType);
 	const buffer = await new Promise<Buffer>((resolve, reject) => {
 		const chunks: Buffer[] = [];
 		const stream = bucket.openDownloadStream(fileObjectId);
@@ -328,12 +341,21 @@ export async function deleteSnapshot(id: string): Promise<void> {
 	}
 	const db = await getDb();
 	const meta = await db.collection('snapshots').findOne({ _id: objectId });
+	if (meta?.s3Key) {
+		try {
+			await s3Client.send(
+				new DeleteObjectCommand({ Bucket: bucketName, Key: String(meta.s3Key) })
+			);
+		} catch {
+			void 0;
+		}
+	}
 	if (meta?.fileId) {
 		const bucket = await snapshotBucket();
 		try {
 			await bucket.delete(new ObjectId(String(meta.fileId)));
 		} catch {
-			// file may already be gone
+			void 0;
 		}
 	}
 	await db.collection('snapshots').deleteOne({ _id: objectId });
