@@ -105,17 +105,25 @@
 		return 'other';
 	}
 
+	let search = $state('');
+
 	const rank: Record<string, number> = { image: 0, video: 1, pdf: 2, other: 3 };
 	const sorted = $derived(
 		[...data.files].sort((a, b) => rank[kind(a.contentType)] - rank[kind(b.contentType)])
 	);
-	const visible = $derived(
-		filter === 'image' || filter === 'video' || filter === 'pdf' || filter === 'other'
-			? sorted.filter((file) => kind(file.contentType) === filter)
-			: filter === 'unused'
-				? sorted.filter((file) => !file.used)
-				: sorted
-	);
+	const visible = $derived.by(() => {
+		let list = sorted;
+		if (filter === 'image' || filter === 'video' || filter === 'pdf' || filter === 'other') {
+			list = list.filter((file) => kind(file.contentType) === filter);
+		} else if (filter === 'unused') {
+			list = list.filter((file) => !file.used);
+		}
+		const term = search.trim().toLowerCase();
+		if (term) {
+			list = list.filter((file) => file.filename.toLowerCase().includes(term));
+		}
+		return list;
+	});
 
 	const pageSize = 24;
 	let mediaPage = $state(1);
@@ -124,6 +132,7 @@
 
 	$effect(() => {
 		void filter;
+		void search;
 		mediaPage = 1;
 	});
 
@@ -546,15 +555,31 @@
 		{/if}
 	</form>
 
+	<div class="relative mt-6">
+		<Icon
+			icon="mdi:magnify"
+			width="18"
+			class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
+		/>
+		<input
+			type="search"
+			bind:value={search}
+			placeholder="Search files by name..."
+			class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pr-3 pl-10 text-sm text-slate-700 placeholder:text-slate-400 focus:border-gmu-green focus:ring-1 focus:ring-gmu-green focus:outline-none"
+		/>
+	</div>
+
 	{#if visible.length === 0}
 		<div class="card empty-state mt-6">
 			<Icon icon="mdi:image-off-outline" width="32" class="text-slate-300" />
 			<p>
 				{data.files.length === 0
 					? 'No files uploaded yet.'
-					: filter === 'unused'
-						? 'No unused files. Everything is referenced somewhere.'
-						: 'No files of this type.'}
+					: search.trim()
+						? `No files match "${search.trim()}".`
+						: filter === 'unused'
+							? 'No unused files. Everything is referenced somewhere.'
+							: 'No files of this type.'}
 			</p>
 		</div>
 	{:else}
