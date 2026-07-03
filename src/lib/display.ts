@@ -16,6 +16,31 @@ function formatDate(value: unknown): string {
 	return match ? `${match[2]}/${match[3]}/${match[1]}` : value;
 }
 
+function dayNumber(value: unknown): number | null {
+	if (typeof value !== 'string') return null;
+	const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
+	if (!match) return null;
+	return Number(match[1]) * 10000 + Number(match[2]) * 100 + Number(match[3]);
+}
+
+function eventStatus(doc: Record<string, any>): string {
+	const start = dayNumber(doc.date);
+	if (start === null) return '';
+	const end = dayNumber(doc.endDate) ?? start;
+	const now = new Date();
+	const today = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+	if (today < start) return 'Upcoming';
+	if (today > end) return 'Past';
+	return 'Ongoing';
+}
+
+function eventRange(doc: Record<string, any>): string {
+	const start = formatDate(doc.date);
+	const end = formatDate(doc.endDate);
+	if (!start) return '';
+	return end && end !== start ? `${start} - ${end}` : start;
+}
+
 export const listDisplay: Record<string, ListDisplay> = {
 	siteInfo: {
 		image: 'logo',
@@ -24,6 +49,15 @@ export const listDisplay: Record<string, ListDisplay> = {
 	news: {
 		subtitle: (doc) => plainText(doc.body),
 		badge: (doc) => formatDate(doc.date)
+	},
+	events: {
+		image: 'image',
+		subtitle: (doc) =>
+			[eventRange(doc), doc.location, doc.linkType === 'external' ? 'External link' : '', plainText(doc.summary)]
+				.filter(Boolean)
+				.join('  ·  '),
+		badge: (doc) => eventStatus(doc),
+		filter: { field: 'linkType', label: 'Type' }
 	},
 	projects: {
 		image: 'image',

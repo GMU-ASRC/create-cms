@@ -26,6 +26,14 @@ function serialize(doc: Record<string, unknown>): Document {
 
 export async function listDocuments(key: string): Promise<Document[]> {
 	const db = await getDb();
+	const meta = collections.find((collection) => collection.key === key);
+	if (meta?.sortBy) {
+		const docs = await db
+			.collection(key)
+			.aggregate([{ $sort: { [meta.sortBy.field]: meta.sortBy.direction, _id: -1 } }])
+			.toArray();
+		return docs.map(serialize);
+	}
 	const docs = await db
 		.collection(key)
 		.aggregate([

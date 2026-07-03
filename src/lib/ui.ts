@@ -1,6 +1,7 @@
 export const collectionIcons: Record<string, string> = {
 	siteInfo: 'mdi:home-city-outline',
 	news: 'mdi:newspaper-variant-outline',
+	events: 'uil:calender',
 	projects: 'mdi:rocket-launch-outline',
 	researchArticles: 'mdi:file-document-outline',
 	publications: 'mdi:book-open-variant',
@@ -14,6 +15,7 @@ export const collectionIcons: Record<string, string> = {
 export const collectionTints: Record<string, string> = {
 	siteInfo: 'bg-emerald-100 text-emerald-700',
 	news: 'bg-sky-100 text-sky-700',
+	events: 'bg-orange-100 text-orange-700',
 	projects: 'bg-violet-100 text-violet-700',
 	researchArticles: 'bg-amber-100 text-amber-700',
 	publications: 'bg-rose-100 text-rose-700',

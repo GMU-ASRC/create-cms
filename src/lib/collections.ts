@@ -3,11 +3,13 @@ export type CollectionMeta = {
 	label: string;
 	titleField: string;
 	singleton?: boolean;
+	sortBy?: { field: string; direction: 1 | -1 };
 };
 
 export const collections: CollectionMeta[] = [
 	{ key: 'siteInfo', label: 'Site Info', titleField: 'labName', singleton: true },
 	{ key: 'news', label: 'News', titleField: 'title' },
+	{ key: 'events', label: 'Events', titleField: 'title', sortBy: { field: 'date', direction: -1 } },
 	{ key: 'projects', label: 'Projects', titleField: 'title' },
 	{ key: 'researchArticles', label: 'Research Articles', titleField: 'title' },
 	{ key: 'publications', label: 'Publications', titleField: 'title' },

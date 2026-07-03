@@ -148,6 +148,24 @@ export const schemas: Record<string, Field[]> = {
 			]
 		},
 		{
+			key: 'links',
+			label: 'Lab links',
+			type: 'objectList',
+			itemLabel: 'Link',
+			template: { href: '', icon: '' },
+			help: 'Links shown in the website footer, such as related labs, the department, or the university.',
+			fields: [
+				{ key: 'href', label: 'Link', type: 'url' },
+				{
+					key: 'icon',
+					label: 'Icon',
+					type: 'text',
+					help: 'An Iconify name, e.g. "mdi:github" or "simple-icons:youtube".',
+					helpLink: { url: 'https://icon-sets.iconify.design/', label: 'Browse icons' }
+				}
+			]
+		},
+		{
 			key: 'contact',
 			label: 'Contact',
 			type: 'group',
@@ -206,6 +224,100 @@ export const schemas: Record<string, Field[]> = {
 			help: 'Attach documents, datasets, or other downloadable files for this news article.'
 		},
 		{ key: 'order', label: 'Order', type: 'number' }
+	],
+	events: [
+		{ key: 'title', label: 'Title', type: 'text', required: true },
+		{
+			key: 'linkType',
+			label: 'Card link',
+			type: 'select',
+			options: ['article', 'external'],
+			help: "Where the event card points: an event page on this site, or an external URL."
+		},
+		{
+			key: 'href',
+			label: 'External link',
+			type: 'url',
+			showWhen: { field: 'linkType', equals: 'external' },
+			help: 'Used when the card link is set to external.'
+		},
+		{
+			key: 'date',
+			label: 'Date',
+			type: 'date',
+			required: true,
+			help: 'Start date. Used to sort events and to mark them Upcoming or Past automatically.'
+		},
+		{ key: 'endDate', label: 'End date', type: 'date', help: 'Optional. For events that span multiple days.' },
+		{
+			key: 'location',
+			label: 'Location',
+			type: 'text',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'e.g. "Fairfax, VA" or "Online".'
+		},
+		{
+			key: 'summary',
+			label: 'Summary',
+			type: 'richtext',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'Short description shown on the event card and at the top of the event page.'
+		},
+		{
+			key: 'image',
+			label: 'Image',
+			type: 'image',
+			help: 'Thumbnail shown on the event card, and the main image on the event page.'
+		},
+		{
+			key: 'content',
+			label: 'Page content',
+			type: 'richtext',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'The main write-up shown on the event page. Supports formatting, links, and images.'
+		},
+		{
+			key: 'tags',
+			label: 'Tags',
+			type: 'stringList',
+			itemLabel: 'Tag',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'Keywords or topics shown as chips on the event page.'
+		},
+		{
+			key: 'teamMembers',
+			label: 'Team members',
+			type: 'members',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'Search and select people from the Team page. You can also type a name and press Enter for outside participants.'
+		},
+		{
+			key: 'links',
+			label: 'Resource links',
+			type: 'objectList',
+			itemLabel: 'Link',
+			template: { label: '', href: '' },
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'External resources such as registration, schedules, or recordings.',
+			fields: [
+				{ key: 'label', label: 'Label', type: 'text' },
+				{ key: 'href', label: 'URL', type: 'url' }
+			]
+		},
+		{
+			key: 'gallery',
+			label: 'Gallery',
+			type: 'mediaList',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'Additional images shown in a gallery on the event page.'
+		},
+		{
+			key: 'files',
+			label: 'Files',
+			type: 'files',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'Attach documents, datasets, or other downloadable files for this event.'
+		}
 	],
 	projects: [
 		{ key: 'title', label: 'Title', type: 'text', required: true },
