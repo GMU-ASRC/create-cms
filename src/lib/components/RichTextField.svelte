@@ -6,6 +6,11 @@
 	import Image from '@tiptap/extension-image';
 	import Link from '@tiptap/extension-link';
 	import Placeholder from '@tiptap/extension-placeholder';
+	import Youtube from '@tiptap/extension-youtube';
+	import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+	import { createLowlight, common } from 'lowlight';
+
+	const lowlight = createLowlight(common);
 
 	let {
 		container,
@@ -18,6 +23,8 @@
 	let editor = $state<Editor>();
 	let version = $state(0);
 	let uploading = $state(false);
+	let showYoutubeDialog = $state(false);
+	let youtubeUrl = $state('');
 
 	const AlignImage = Image.extend({
 		addAttributes() {
@@ -39,9 +46,17 @@
 		editor = new Editor({
 			element,
 			extensions: [
-				StarterKit,
+				StarterKit.configure({ codeBlock: false }),
 				Link.configure({ openOnClick: false }),
 				AlignImage,
+				CodeBlockLowlight.configure({ lowlight }),
+				Youtube.configure({
+					controls: true,
+					nocookie: true,
+					modestBranding: true,
+					width: 640,
+					height: 360
+				}),
 				Placeholder.configure({ placeholder })
 			],
 			content: container[fieldKey] || '',
@@ -66,6 +81,18 @@
 
 	function setAlign(align: string) {
 		editor?.chain().focus().updateAttributes('image', { align }).run();
+	}
+
+	function openYoutubeDialog() {
+		youtubeUrl = '';
+		showYoutubeDialog = true;
+	}
+
+	function insertYoutube() {
+		const url = youtubeUrl.trim();
+		if (url) editor?.commands.setYoutubeVideo({ src: url });
+		showYoutubeDialog = false;
+		youtubeUrl = '';
 	}
 
 	function toggleLink() {
@@ -157,6 +184,12 @@
 			'mdi:format-quote-close',
 			'Quote'
 		)}
+		{@render button(
+			() => editor?.chain().focus().toggleCodeBlock().run(),
+			isActive('codeBlock'),
+			'mdi:code-braces-box',
+			'Code block'
+		)}
 		<span class="mx-1 h-5 w-px bg-slate-300"></span>
 		{@render button(toggleLink, isActive('link'), 'mdi:link-variant', 'Link')}
 		{@render button(
@@ -165,6 +198,7 @@
 			uploading ? 'mdi:loading' : 'mdi:image-plus',
 			'Insert image'
 		)}
+		{@render button(openYoutubeDialog, false, 'mdi:youtube', 'Embed YouTube video')}
 		<span class="mx-1 h-5 w-px bg-slate-300"></span>
 		{@render button(
 			() => setAlign('left'),
@@ -206,3 +240,49 @@
 	class="hidden"
 	onchange={onImageChosen}
 />
+
+{#if showYoutubeDialog}
+	<div
+		class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+		role="presentation"
+		onclick={(event) => {
+			if (event.target === event.currentTarget) showYoutubeDialog = false;
+		}}
+	>
+		<div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" role="dialog" aria-modal="true" aria-label="Embed YouTube video">
+			<div class="flex items-start gap-3">
+				<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gmu-green-light text-gmu-green">
+					<Icon icon="mdi:youtube" width="22" />
+				</span>
+				<div class="min-w-0 flex-1">
+					<h2 class="text-base font-semibold text-slate-900">Embed YouTube video</h2>
+					<p class="mt-1 text-sm text-slate-600">Paste a YouTube or YouTube Music link.</p>
+				</div>
+			</div>
+			<!-- svelte-ignore a11y_autofocus -->
+			<input
+				type="url"
+				class="field-input mt-4"
+				placeholder="https://www.youtube.com/watch?v=..."
+				autofocus
+				bind:value={youtubeUrl}
+				onkeydown={(event) => {
+					if (event.key === 'Enter') {
+						event.preventDefault();
+						insertYoutube();
+					} else if (event.key === 'Escape') {
+						event.preventDefault();
+						showYoutubeDialog = false;
+					}
+				}}
+			/>
+			<div class="mt-6 flex justify-end gap-3">
+				<button type="button" class="btn-secondary" onclick={() => (showYoutubeDialog = false)}>Cancel</button>
+				<button type="button" class="btn-primary" onclick={insertYoutube} disabled={!youtubeUrl.trim()}>
+					<Icon icon="mdi:youtube" width="18" />
+					Embed
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

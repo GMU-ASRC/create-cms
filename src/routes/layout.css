@@ -214,3 +214,68 @@
 	display: block;
 	clear: both;
 }
+.rich-content pre {
+	background: var(--color-slate-900);
+	color: var(--color-slate-100);
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 0.85rem;
+	line-height: 1.6;
+	border-radius: 0.5rem;
+	padding: 1rem 1.25rem;
+	margin: 1rem 0;
+	overflow-x: auto;
+}
+.rich-content pre code {
+	background: none;
+	color: inherit;
+	padding: 0;
+	font-size: inherit;
+}
+.rich-content code {
+	background: var(--color-slate-100);
+	color: var(--color-slate-800);
+	border-radius: 0.25rem;
+	padding: 0.1rem 0.35rem;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 0.85em;
+}
+.rich-content [data-youtube-video] {
+	margin: 1rem 0;
+	max-width: 100%;
+}
+.rich-content [data-youtube-video] iframe {
+	max-width: 100%;
+	aspect-ratio: 16 / 9;
+	height: auto;
+	border-radius: 0.5rem;
+}
+.rich-content .hljs-comment,
+.rich-content .hljs-quote {
+	color: #94a3b8;
+	font-style: italic;
+}
+.rich-content .hljs-keyword,
+.rich-content .hljs-selector-tag,
+.rich-content .hljs-built_in,
+.rich-content .hljs-name {
+	color: #93c5fd;
+}
+.rich-content .hljs-string,
+.rich-content .hljs-attr,
+.rich-content .hljs-template-variable {
+	color: #86efac;
+}
+.rich-content .hljs-number,
+.rich-content .hljs-literal,
+.rich-content .hljs-variable {
+	color: #fda4af;
+}
+.rich-content .hljs-title,
+.rich-content .hljs-section,
+.rich-content .hljs-function .hljs-title {
+	color: #fcd34d;
+}
+.rich-content .hljs-tag,
+.rich-content .hljs-attribute {
+	color: #f9a8d4;
+}
