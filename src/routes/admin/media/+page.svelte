@@ -733,6 +733,7 @@
 		{#if isVideo(preview.contentType)}
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<!-- svelte-ignore a11y_media_has_caption -->
 			<video
 				src={`/api/files/${preview.id}`}
 				controls
@@ -742,6 +743,7 @@
 			></video>
 		{:else}
 			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<img
 				src={`/api/files/${preview.id}`}
 				alt={preview.filename}
