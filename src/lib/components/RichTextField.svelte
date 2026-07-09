@@ -9,6 +9,7 @@
 	import Youtube from '@tiptap/extension-youtube';
 	import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 	import { createLowlight, common } from 'lowlight';
+	import { uploadToStorage } from '$lib/upload';
 
 	const lowlight = createLowlight(common);
 
@@ -110,13 +111,8 @@
 		if (!file) return;
 		uploading = true;
 		try {
-			const body = new FormData();
-			body.append('file', file);
-			const response = await fetch('/admin/upload', { method: 'POST', body });
-			if (response.ok) {
-				const { path } = await response.json();
-				editor?.chain().focus().setImage({ src: path, align: 'center' } as { src: string }).run();
-			}
+			const { path } = await uploadToStorage(file);
+			editor?.chain().focus().setImage({ src: path, align: 'center' } as { src: string }).run();
 		} finally {
 			uploading = false;
 			input.value = '';

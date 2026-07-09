@@ -11,6 +11,7 @@
 	import MediaImagePicker from './MediaImagePicker.svelte';
 	import ImageCropper from './ImageCropper.svelte';
 	import { isFieldVisible, type Field } from '$lib/schema';
+	import { uploadToStorage } from '$lib/upload';
 
 	let { field, container }: { field: Field; container: Record<string, any> } = $props();
 
@@ -53,11 +54,7 @@
 		uploading = true;
 		uploadError = '';
 		try {
-			const body = new FormData();
-			body.append('file', file);
-			const response = await fetch('/admin/upload', { method: 'POST', body });
-			if (!response.ok) throw new Error('Upload failed');
-			const result = await response.json();
+			const result = await uploadToStorage(file);
 			container[field.key] = result.path;
 		} catch {
 			uploadError = 'Upload failed. Try again.';

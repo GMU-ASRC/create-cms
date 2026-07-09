@@ -6,6 +6,7 @@ import {
 	GetObjectCommand,
 	PutObjectCommand
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getDb } from './db';
 import { s3Client, bucketName } from './storage';
 
@@ -48,8 +49,24 @@ function extensionFor(filename: string): string {
 	return /^[a-z0-9]{1,8}$/.test(ext) ? `.${ext}` : '';
 }
 
-function newKey(filename: string): string {
+export function newUploadKey(filename: string): string {
 	return `${randomUUID()}${extensionFor(filename)}`;
+}
+
+export async function registerUploadedFile(
+	key: string,
+	filename: string,
+	contentType: string,
+	length: number
+): Promise<void> {
+	const meta = await getMetaCollection();
+	await meta.insertOne({
+		_id: key,
+		filename,
+		contentType,
+		length,
+		uploadDate: new Date()
+	});
 }
 
 export async function uploadFile(
@@ -57,7 +74,7 @@ export async function uploadFile(
 	contentType: string,
 	data: Buffer
 ): Promise<string> {
-	const key = newKey(filename);
+	const key = newUploadKey(filename);
 	await s3Client.send(
 		new PutObjectCommand({
 			Bucket: bucketName,
@@ -66,14 +83,7 @@ export async function uploadFile(
 			ContentType: contentType
 		})
 	);
-	const meta = await getMetaCollection();
-	await meta.insertOne({
-		_id: key,
-		filename,
-		contentType,
-		length: data.length,
-		uploadDate: new Date()
-	});
+	await registerUploadedFile(key, filename, contentType, data.length);
 	return key;
 }
 
@@ -184,20 +194,17 @@ export async function mirrorExternalFile(url: string): Promise<string | null> {
 	return result.ok ? result.path : null;
 }
 
-export async function getFile(id: string) {
-	try {
-		const response = await s3Client.send(
-			new GetObjectCommand({ Bucket: bucketName, Key: id })
-		);
-		const bytes = await response.Body?.transformToByteArray();
-		if (!bytes) return null;
-		return {
-			data: Buffer.from(bytes),
-			contentType: response.ContentType || 'application/octet-stream'
-		};
-	} catch {
-		return null;
-	}
+export async function getFileUrl(id: string): Promise<string | null> {
+	const meta = await getMetaCollection();
+	const stored = await meta.findOne({ _id: id });
+	if (!stored) return null;
+	const command = new GetObjectCommand({
+		Bucket: bucketName,
+		Key: id,
+		ResponseContentType: stored.contentType || 'application/octet-stream',
+		ResponseCacheControl: 'public, max-age=31536000, immutable'
+	});
+	return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
 export async function listFiles() {

@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { confirmSubmit } from '$lib/confirm';
+	import { uploadToStorage } from '$lib/upload';
 
 	let { data, form } = $props();
 
@@ -11,16 +12,7 @@
 	let mediaProgress = $state(0);
 	let mediaError = $state('');
 
-	function safeJson(text: string): Record<string, unknown> | null {
-		try {
-			const value = JSON.parse(text);
-			return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
-		} catch {
-			return null;
-		}
-	}
-
-	function uploadMedia(event: SubmitEvent) {
+	async function uploadMedia(event: SubmitEvent) {
 		event.preventDefault();
 		const file = mediaInput?.files?.[0];
 		if (!file) {
@@ -30,34 +22,17 @@
 		mediaError = '';
 		mediaUploading = true;
 		mediaProgress = 0;
-
-		const body = new FormData();
-		body.append('file', file);
-
-		const request = new XMLHttpRequest();
-		request.open('POST', '/admin/upload');
-		request.upload.onprogress = (progressEvent) => {
-			if (progressEvent.lengthComputable) {
-				mediaProgress = Math.round((progressEvent.loaded / progressEvent.total) * 100);
-			}
-		};
-		request.onload = async () => {
+		try {
+			await uploadToStorage(file, (percent) => (mediaProgress = percent));
+			mediaProgress = 100;
+			if (mediaInput) mediaInput.value = '';
+			await invalidateAll();
+			mediaProgress = 0;
+		} catch (uploadError) {
+			mediaError = (uploadError as Error).message;
+		} finally {
 			mediaUploading = false;
-			if (request.status >= 200 && request.status < 300) {
-				mediaProgress = 100;
-				if (mediaInput) mediaInput.value = '';
-				await invalidateAll();
-				mediaProgress = 0;
-			} else {
-				const parsed = safeJson(request.responseText);
-				mediaError = typeof parsed?.message === 'string' ? parsed.message : 'Upload failed';
-			}
-		};
-		request.onerror = () => {
-			mediaUploading = false;
-			mediaError = 'Upload failed';
-		};
-		request.send(body);
+		}
 	}
 
 	let copiedId = $state('');

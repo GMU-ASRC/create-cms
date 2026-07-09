@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
+	import { uploadToStorage } from '$lib/upload';
 
 	let { container, fieldKey }: { container: Record<string, any>; fieldKey: string } = $props();
 
@@ -87,11 +88,7 @@
 		uploading = true;
 		uploadError = '';
 		try {
-			const body = new FormData();
-			body.append('file', file);
-			const response = await fetch('/admin/upload', { method: 'POST', body });
-			if (!response.ok) throw new Error('Upload failed');
-			const result = await response.json();
+			const result = await uploadToStorage(file);
 			files = [
 				{ id: result.id, filename: file.name, path: result.path, contentType: file.type },
 				...files

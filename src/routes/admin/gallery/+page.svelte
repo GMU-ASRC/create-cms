@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import { iconFor, tintFor } from '$lib/ui';
+	import { uploadToStorage } from '$lib/upload';
 
 	let { data, form } = $props();
 
@@ -79,11 +80,7 @@
 		uploading = true;
 		uploadError = '';
 		try {
-			const body = new FormData();
-			body.append('file', file);
-			const response = await fetch('/admin/upload', { method: 'POST', body });
-			if (!response.ok) throw new Error('Upload failed');
-			const result = await response.json();
+			const result = await uploadToStorage(file);
 			items.push({ image: result.path, title: '', type: file.type });
 		} catch {
 			uploadError = 'Upload failed. Try again.';

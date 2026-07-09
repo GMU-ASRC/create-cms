@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getFile } from '$lib/server/files';
+import { getFileUrl } from '$lib/server/files';
 import { corsHeaders } from '$lib/server/cors';
 
 export const OPTIONS: RequestHandler = async () => {
@@ -8,15 +8,16 @@ export const OPTIONS: RequestHandler = async () => {
 };
 
 export const GET: RequestHandler = async ({ params }) => {
-	const file = await getFile(params.id);
-	if (!file) {
+	const url = await getFileUrl(params.id);
+	if (!url) {
 		error(404, 'File not found');
 	}
-	return new Response(new Uint8Array(file.data), {
+	return new Response(null, {
+		status: 302,
 		headers: {
 			...corsHeaders(),
-			'Content-Type': file.contentType,
-			'Cache-Control': 'public, max-age=31536000, immutable'
+			Location: url,
+			'Cache-Control': 'public, max-age=1800'
 		}
 	});
 };
