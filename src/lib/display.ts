@@ -62,7 +62,8 @@ export const listDisplay: Record<string, ListDisplay> = {
 	projects: {
 		image: 'image',
 		subtitle: (doc) => doc.summary || '',
-		badge: (doc) => doc.status || ''
+		badge: (doc) => doc.status || '',
+		reorderable: true
 	},
 	researchArticles: {
 		image: 'image',
