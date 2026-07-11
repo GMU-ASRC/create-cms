@@ -242,6 +242,14 @@ export const schemas: Record<string, Field[]> = {
 			help: 'Used when the card link is set to external.'
 		},
 		{
+			key: 'slug',
+			label: 'Slug',
+			type: 'text',
+			autoSlugFrom: 'title',
+			showWhen: { field: 'linkType', equals: 'article' },
+			help: 'Auto-generated from the title. The URL for this event page, e.g. /events/my-event. Assigning a slug already used by another event moves that event to a new random slug.'
+		},
+		{
 			key: 'date',
 			label: 'Date',
 			type: 'date',

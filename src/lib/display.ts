@@ -53,7 +53,13 @@ export const listDisplay: Record<string, ListDisplay> = {
 	events: {
 		image: 'image',
 		subtitle: (doc) =>
-			[eventRange(doc), doc.location, doc.linkType === 'external' ? 'External link' : '', plainText(doc.summary)]
+			[
+				doc.slug ? `/${doc.slug}` : '',
+				eventRange(doc),
+				doc.location,
+				doc.linkType === 'external' ? 'External link' : '',
+				plainText(doc.summary)
+			]
 				.filter(Boolean)
 				.join('  ·  '),
 		badge: (doc) => eventStatus(doc),

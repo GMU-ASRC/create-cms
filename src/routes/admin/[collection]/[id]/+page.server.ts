@@ -5,7 +5,9 @@ import {
 	getDocument,
 	createDocument,
 	updateDocument,
-	deleteDocument
+	deleteDocument,
+	findDocumentBySlug,
+	randomSlug
 } from '$lib/server/content';
 import { templates } from '$lib/templates';
 import { schemaFor, applyAutoSlugs } from '$lib/schema';
@@ -58,7 +60,27 @@ export const actions: Actions = {
 		} catch (parseError) {
 			return fail(400, { error: `Invalid JSON: ${(parseError as Error).message}`, json: raw });
 		}
-		applyAutoSlugs(schemaFor(params.collection), parsed);
+		const fields = schemaFor(params.collection);
+		applyAutoSlugs(fields, parsed);
+
+		const hasSlugField = fields.some((field) => field.key === 'slug');
+		const slug = typeof parsed.slug === 'string' ? parsed.slug.trim() : '';
+		if (hasSlugField && slug) {
+			const currentId = params.id === 'new' ? undefined : params.id;
+			const conflict = await findDocumentBySlug(params.collection, slug, currentId);
+			if (conflict) {
+				const confirmed = formData.get('confirmOverwrite') === 'true';
+				if (!confirmed) {
+					return fail(409, {
+						slugConflict: true,
+						slug,
+						conflictTitle: String(conflict[meta.titleField] ?? '') || '(untitled)'
+					});
+				}
+				await updateDocument(params.collection, conflict.id, { slug: randomSlug() });
+			}
+		}
+
 		await mirrorFileFields(params.collection, parsed);
 		const title = String(parsed[meta.titleField] ?? '') || '(untitled)';
 		if (params.id === 'new') {

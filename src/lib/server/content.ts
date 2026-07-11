@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { randomBytes } from 'node:crypto';
 import { getDb } from './db';
 import { collections } from '$lib/collections';
 export { collections, getCollectionMeta } from '$lib/collections';
@@ -24,8 +25,39 @@ function serialize(doc: Record<string, unknown>): Document {
 	return { id: (_id as ObjectId).toString(), ...rest };
 }
 
+function eventDayNumber(value: unknown): number | null {
+	if (typeof value !== 'string' || !value.trim()) return null;
+	const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
+	if (!match) return null;
+	return Number(match[1]) * 10000 + Number(match[2]) * 100 + Number(match[3]);
+}
+
+function eventIsPast(doc: Record<string, unknown>): boolean {
+	const start = eventDayNumber(doc.date);
+	if (start === null) return false;
+	const end = eventDayNumber(doc.endDate) ?? start;
+	const now = new Date();
+	const today = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+	return today > end;
+}
+
+function compareEvents(first: Document, second: Document): number {
+	const firstPast = eventIsPast(first);
+	const secondPast = eventIsPast(second);
+	if (firstPast !== secondPast) return firstPast ? 1 : -1;
+	const firstTime = Date.parse(String(first.date ?? ''));
+	const secondTime = Date.parse(String(second.date ?? ''));
+	const firstValue = Number.isNaN(firstTime) ? Number.POSITIVE_INFINITY : firstTime;
+	const secondValue = Number.isNaN(secondTime) ? Number.POSITIVE_INFINITY : secondTime;
+	return firstPast ? secondValue - firstValue : firstValue - secondValue;
+}
+
 export async function listDocuments(key: string): Promise<Document[]> {
 	const db = await getDb();
+	if (key === 'events') {
+		const docs = await db.collection(key).find({}).toArray();
+		return docs.map(serialize).sort(compareEvents);
+	}
 	const meta = collections.find((collection) => collection.key === key);
 	if (meta?.sortBy) {
 		const docs = await db
@@ -49,6 +81,26 @@ export async function getDocument(key: string, id: string): Promise<Document | n
 	const db = await getDb();
 	const doc = await db.collection(key).findOne({ _id: new ObjectId(id) });
 	return doc ? serialize(doc) : null;
+}
+
+export async function findDocumentBySlug(
+	key: string,
+	slug: string,
+	excludeId?: string
+): Promise<Document | null> {
+	const db = await getDb();
+	const query: Record<string, unknown> = { slug };
+	if (excludeId) query._id = { $ne: new ObjectId(excludeId) };
+	const doc = await db.collection(key).findOne(query);
+	return doc ? serialize(doc) : null;
+}
+
+export function randomSlug(length = 8): string {
+	return randomBytes(16)
+		.toString('base64')
+		.replace(/[^a-zA-Z0-9]/g, '')
+		.toLowerCase()
+		.slice(0, length);
 }
 
 export async function createDocument(key: string, data: Record<string, unknown>): Promise<string> {

@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import Icon from '@iconify/svelte';
+	import { enhance } from '$app/forms';
 	import FieldEditor from './FieldEditor.svelte';
 	import EntryPreview from './EntryPreview.svelte';
 	import { ensureShape, type Field } from '$lib/schema';
+	import { confirmAction } from '$lib/confirm';
 
 	let {
 		fields,
@@ -24,9 +26,37 @@
 	const previewable = ['news', 'events', 'projects', 'researchArticles'];
 	const canPreview = $derived(previewable.includes(metaKey));
 	let showPreview = $state(false);
+
+	let formEl = $state<HTMLFormElement | null>(null);
+	let confirmOverwrite = $state(false);
 </script>
 
-<form method="POST" action="?/save" class="mt-6">
+<form
+	bind:this={formEl}
+	method="POST"
+	action="?/save"
+	class="mt-6"
+	use:enhance={() => {
+		return async ({ result, update }) => {
+			if (result.type === 'failure' && result.data?.slugConflict) {
+				const proceed = await confirmAction({
+					title: 'Slug already in use',
+					message: `The slug "${result.data.slug}" is already used by "${result.data.conflictTitle}". Continuing will move that entry to a new random slug and assign this slug here. Continue?`,
+					confirmLabel: 'Overwrite slug',
+					danger: true
+				});
+				if (proceed) {
+					confirmOverwrite = true;
+					await tick();
+					formEl?.requestSubmit();
+				}
+				return;
+			}
+			confirmOverwrite = false;
+			await update();
+		};
+	}}
+>
 	<p class="mb-4 text-xs text-muted">
 		Fields marked <span class="text-red-600">*</span> are required. All others are optional.
 	</p>
@@ -37,6 +67,7 @@
 	</div>
 
 	<input type="hidden" name="json" value={serialized} />
+	<input type="hidden" name="confirmOverwrite" value={confirmOverwrite ? 'true' : ''} />
 
 	{#if error}
 		<p class="alert-error mt-4">{error}</p>
