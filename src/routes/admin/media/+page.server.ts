@@ -1,6 +1,6 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { listFiles, uploadFile, deleteFile, isAllowedUpload } from '$lib/server/files';
+import { listFiles, uploadFile, deleteFile, renameFile, isAllowedUpload } from '$lib/server/files';
 import { assertStorageLimit } from '$lib/server/storage';
 import { usedFileIds } from '$lib/server/content';
 import { listLinks, createLink, deleteLink } from '$lib/server/links';
@@ -61,6 +61,20 @@ export const actions: Actions = {
 			await deleteFile(id);
 			await logActivity(locals.user.email, 'Deleted media', id);
 		}
+		return { success: true };
+	},
+	rename: async ({ request, locals }) => {
+		if (!locals.user) {
+			redirect(303, '/login');
+		}
+		const formData = await request.formData();
+		const id = String(formData.get('id') ?? '');
+		const filename = String(formData.get('filename') ?? '').trim();
+		if (!filename) {
+			return fail(400, { renameError: 'Enter a file name' });
+		}
+		await renameFile(id, filename);
+		await logActivity(locals.user.email, 'Renamed media', filename);
 		return { success: true };
 	},
 	createLink: async ({ request, locals }) => {

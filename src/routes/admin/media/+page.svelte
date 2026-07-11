@@ -47,6 +47,18 @@
 		'all'
 	);
 	let preview = $state<{ id: string; filename: string; contentType?: string } | null>(null);
+	let renamingId = $state('');
+	let renameValue = $state('');
+
+	function startRename(file: { id: string; filename: string }) {
+		renamingId = file.id;
+		renameValue = file.filename;
+	}
+
+	function cancelRename() {
+		renamingId = '';
+		renameValue = '';
+	}
 
 	function isExternalUrl(value: string): boolean {
 		return /^https?:\/\//i.test(value);
@@ -618,7 +630,39 @@
 							</span>
 						</a>
 					{/if}
-					<p class="mt-3 truncate text-sm font-medium" title={file.filename}>{file.filename}</p>
+					{#if renamingId === file.id}
+						<form
+							method="POST"
+							action="?/rename"
+							use:enhance={() => {
+								return async ({ update }) => {
+									await update();
+									renamingId = '';
+								};
+							}}
+							class="mt-3 flex items-center gap-2"
+						>
+							<input type="hidden" name="id" value={file.id} />
+							<input name="filename" bind:value={renameValue} class="field-input flex-1" required />
+							<button class="shrink-0 text-gmu-green" title="Save name">
+								<Icon icon="mdi:check" width="18" />
+							</button>
+							<button
+								type="button"
+								class="shrink-0 text-slate-400 hover:text-slate-600"
+								title="Cancel"
+								onclick={cancelRename}
+							>
+								<Icon icon="mdi:close" width="18" />
+							</button>
+						</form>
+						{#if form?.renameError}
+							<p class="alert-error mt-1">{form.renameError}</p>
+						{/if}
+					{:else}
+						<p class="mt-3 truncate text-sm font-medium" title={file.filename}>{file.filename}</p>
+					{/if}
+					<p class="mt-0.5 text-xs text-muted">{formatSize(file.length)}</p>
 					{#if file.used}
 						<span
 							class="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-gmu-green"
@@ -645,18 +689,23 @@
 						<Icon icon={copiedId === file.id ? 'mdi:check' : 'mdi:content-copy'} width="14" class="shrink-0" />
 						<span class="truncate">{copiedId === file.id ? 'Copied' : `/api/files/${file.id}`}</span>
 					</button>
-					<form
-						method="POST"
-						action="?/delete"
-						class="mt-3 border-t border-slate-100 pt-3"
-						onsubmit={(event) => confirmDelete(event, file)}
-					>
-						<input type="hidden" name="id" value={file.id} />
-						<button class="flex items-center gap-1 text-xs font-medium text-red-600 hover:underline">
-							<Icon icon="mdi:trash-can-outline" width="14" />
-							Delete
+					<div class="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3">
+						<button
+							type="button"
+							class="flex items-center gap-1 text-xs font-medium text-gmu-green hover:underline"
+							onclick={() => startRename(file)}
+						>
+							<Icon icon="mdi:pencil-outline" width="14" />
+							Rename
 						</button>
-					</form>
+						<form method="POST" action="?/delete" onsubmit={(event) => confirmDelete(event, file)}>
+							<input type="hidden" name="id" value={file.id} />
+							<button class="flex items-center gap-1 text-xs font-medium text-red-600 hover:underline">
+								<Icon icon="mdi:trash-can-outline" width="14" />
+								Delete
+							</button>
+						</form>
+					</div>
 				</div>
 			{/each}
 		</div>

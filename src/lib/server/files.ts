@@ -194,6 +194,11 @@ export async function mirrorExternalFile(url: string): Promise<string | null> {
 	return result.ok ? result.path : null;
 }
 
+function contentDispositionFor(filename: string): string {
+	const fallback = (filename || 'file').replace(/["\\]/g, '_');
+	return `inline; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+}
+
 export async function getFileUrl(id: string): Promise<string | null> {
 	const meta = await getMetaCollection();
 	const stored = await meta.findOne({ _id: id });
@@ -202,6 +207,7 @@ export async function getFileUrl(id: string): Promise<string | null> {
 		Bucket: bucketName,
 		Key: id,
 		ResponseContentType: stored.contentType || 'application/octet-stream',
+		ResponseContentDisposition: contentDispositionFor(stored.filename),
 		ResponseCacheControl: 'public, max-age=31536000, immutable'
 	});
 	return getSignedUrl(s3Client, command, { expiresIn: 3600 });
@@ -217,6 +223,11 @@ export async function listFiles() {
 		length: file.length,
 		uploadDate: file.uploadDate
 	}));
+}
+
+export async function renameFile(id: string, filename: string): Promise<void> {
+	const meta = await getMetaCollection();
+	await meta.updateOne({ _id: id }, { $set: { filename } });
 }
 
 export async function deleteFile(id: string): Promise<void> {
