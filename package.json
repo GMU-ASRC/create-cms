@@ -17,8 +17,8 @@
 		"cleanup:snapshots": "bun run scripts/cleanup-snapshots.ts"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1084.0",
-		"@aws-sdk/s3-request-presigner": "^3.1084.0",
+		"@aws-sdk/client-s3": "^3.1085.0",
+		"@aws-sdk/s3-request-presigner": "^3.1085.0",
 		"@iconify/svelte": "^4.2.0",
 		"@tiptap/core": "^2.27.2",
 		"@tiptap/extension-code-block-lowlight": "^2.27.2",
