@@ -68,13 +68,13 @@ export const listDisplay: Record<string, ListDisplay> = {
 	projects: {
 		image: 'image',
 		subtitle: (doc) => doc.summary || '',
-		badge: (doc) => doc.status || '',
+		badge: (doc) => doc.years || '',
 		reorderable: true
 	},
 	researchArticles: {
 		image: 'image',
-		subtitle: (doc) => doc.years || '',
-		badge: (doc) => (doc.content ? 'Article' : 'Empty'),
+		subtitle: (doc) => doc.author || '',
+		badge: (doc) => doc.status || '',
 		reorderable: true
 	},
 	publications: {

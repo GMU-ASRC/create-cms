@@ -335,7 +335,12 @@ export const schemas: Record<string, Field[]> = {
 			type: 'richtext',
 			help: 'Short description shown on the project card and at the top of the project page.'
 		},
-		{ key: 'status', label: 'Status', type: 'select', options: ['Active', 'Completed'] },
+		{
+			key: 'years',
+			label: 'Timeline',
+			type: 'text',
+			help: 'Shown on the project card and page, e.g. "2023-Present" or "2019-2022".'
+		},
 		{
 			key: 'featured',
 			label: 'Featured',
@@ -427,7 +432,7 @@ export const schemas: Record<string, Field[]> = {
 		},
 		{ key: 'title', label: 'Title', type: 'text', required: true },
 		{ key: 'author', label: 'Author', type: 'author', help: 'Optional. Start typing to pick a team member, or enter any name. Shown as the byline for this article.' },
-		{ key: 'years', label: 'Years', type: 'text' },
+		{ key: 'status', label: 'Status', type: 'select', options: ['Active', 'Completed'] },
 		{ key: 'image', label: 'Thumbnail', type: 'image', help: 'Shown on the Research listing cards.' },
 		{
 			key: 'content',

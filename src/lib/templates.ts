@@ -27,7 +27,7 @@ export const templates: Record<string, unknown> = {
 	projects: {
 		title: '',
 		summary: '',
-		status: 'Active',
+		years: '',
 		featured: false,
 		tags: [],
 		image: '',
@@ -47,7 +47,7 @@ export const templates: Record<string, unknown> = {
 		slug: '',
 		title: '',
 		author: '',
-		years: '',
+		status: 'Active',
 		image: '',
 		content: '',
 		gallery: [],

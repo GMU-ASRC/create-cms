@@ -206,7 +206,7 @@
 	{:else if metaKey === 'projects'}
 		<article>
 			<div class="flex flex-wrap items-center gap-3">
-				{#if doc.status}<span class="font-mono text-xs text-gmu-green">{doc.status}</span>{/if}
+				{#if doc.years}<span class="font-mono text-xs text-gmu-green">{doc.years}</span>{/if}
 				{#if doc.featured}
 					<span class="inline-flex items-center gap-1 rounded-full bg-gmu-gold px-2.5 py-1 text-xs font-bold text-gmu-green-dark">
 						<Icon icon="mdi:star" width="13" />
@@ -237,8 +237,8 @@
 			<h1 class="text-3xl font-bold tracking-tight">{doc.title || 'Untitled'}</h1>
 			<p class="mt-2 text-sm text-slate-500">
 				{#if doc.author}By {doc.author}{/if}
-				{#if doc.author && doc.years} &middot; {/if}
-				{#if doc.years}{doc.years}{/if}
+				{#if doc.author && doc.status} &middot; {/if}
+				{#if doc.status}{doc.status}{/if}
 			</p>
 			<div class="mt-3 h-1 w-12 bg-gmu-gold"></div>
 			{#if doc.image}
