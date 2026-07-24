@@ -27,21 +27,30 @@
 {/key}
 
 {#if !isNew}
-	<form
-		method="POST"
-		action="?/delete"
-		class="mt-8 border-t border-slate-200 pt-6"
-		onsubmit={(event) =>
-			confirmSubmit(event, {
-				title: 'Delete entry',
-				message: 'Delete this entry? This cannot be undone.',
-				danger: true,
-				confirmLabel: 'Delete'
-			})}
-	>
-		<button class="btn-danger">
-			<Icon icon="mdi:trash-can-outline" width="18" />
-			Delete
-		</button>
-	</form>
+	<div class="mt-8 flex items-center gap-3 border-t border-slate-200 pt-6">
+		{#if meta.key === 'events'}
+			<form method="POST" action="?/duplicate">
+				<button class="btn-secondary">
+					<Icon icon="mdi:content-copy" width="18" />
+					Duplicate
+				</button>
+			</form>
+		{/if}
+		<form
+			method="POST"
+			action="?/delete"
+			onsubmit={(event) =>
+				confirmSubmit(event, {
+					title: 'Delete entry',
+					message: 'Delete this entry? This cannot be undone.',
+					danger: true,
+					confirmLabel: 'Delete'
+				})}
+		>
+			<button class="btn-danger">
+				<Icon icon="mdi:trash-can-outline" width="18" />
+				Delete
+			</button>
+		</form>
+	</div>
 {/if}

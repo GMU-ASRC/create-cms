@@ -138,6 +138,12 @@
 	</div>
 	{#if !meta.singleton}
 		<div class="flex items-center gap-2">
+			{#if meta.key === 'events'}
+				<a href="/admin/events/calendar" class="btn-secondary">
+					<Icon icon="mdi:calendar-month-outline" width="18" />
+					Calendar
+				</a>
+			{/if}
 			{#if meta.key === 'publications'}
 				<form
 					method="POST"

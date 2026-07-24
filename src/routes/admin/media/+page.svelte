@@ -4,6 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { confirmSubmit } from '$lib/confirm';
 	import { uploadToStorage } from '$lib/upload';
+	import QrCodeGenerator from '$lib/components/QrCodeGenerator.svelte';
 
 	let { data, form } = $props();
 
@@ -43,9 +44,9 @@
 	let dropActive = $state(false);
 	let droppedName = $state('');
 	let fileInput = $state<HTMLInputElement | null>(null);
-	let filter = $state<'all' | 'image' | 'video' | 'pdf' | 'other' | 'unused' | 'links' | 'snapshots'>(
-		'all'
-	);
+	let filter = $state<
+		'all' | 'image' | 'video' | 'pdf' | 'other' | 'unused' | 'links' | 'snapshots' | 'qrcodes'
+	>('all');
 	let preview = $state<{ id: string; filename: string; contentType?: string } | null>(null);
 	let renamingId = $state('');
 	let renameValue = $state('');
@@ -82,7 +83,8 @@
 		{ key: 'other', label: 'Other' },
 		{ key: 'unused', label: 'Unused' },
 		{ key: 'links', label: 'Links' },
-		{ key: 'snapshots', label: 'Snapshots' }
+		{ key: 'snapshots', label: 'Snapshots' },
+		{ key: 'qrcodes', label: 'QR Codes' }
 	] as const;
 
 	function kind(contentType: string | undefined): 'image' | 'video' | 'pdf' | 'other' {
@@ -128,8 +130,9 @@
 	});
 
 	function countFor(
-		key: 'all' | 'image' | 'video' | 'pdf' | 'other' | 'unused' | 'links' | 'snapshots'
-	): number {
+		key: 'all' | 'image' | 'video' | 'pdf' | 'other' | 'unused' | 'links' | 'snapshots' | 'qrcodes'
+	): number | null {
+		if (key === 'qrcodes') return null;
 		if (key === 'links') return data.links.length;
 		if (key === 'snapshots') return data.snapshots.length;
 		if (key === 'all') return data.files.length;
@@ -240,14 +243,18 @@
 				: 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'}"
 		>
 			{option.label}
-			<span class="text-xs {filter === option.key ? 'text-white/80' : 'text-slate-400'}">
-				{countFor(option.key)}
-			</span>
+			{#if countFor(option.key) !== null}
+				<span class="text-xs {filter === option.key ? 'text-white/80' : 'text-slate-400'}">
+					{countFor(option.key)}
+				</span>
+			{/if}
 		</button>
 	{/each}
 </div>
 
-{#if filter === 'links'}
+{#if filter === 'qrcodes'}
+	<QrCodeGenerator />
+{:else if filter === 'links'}
 	<form
 		method="POST"
 		action="?/createLink"

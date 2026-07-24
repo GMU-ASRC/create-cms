@@ -6,6 +6,7 @@ import {
 	createDocument,
 	updateDocument,
 	deleteDocument,
+	duplicateDocument,
 	findDocumentBySlug,
 	randomSlug
 } from '$lib/server/content';
@@ -108,5 +109,25 @@ export const actions: Actions = {
 			);
 		}
 		redirect(303, `/admin/${params.collection}`);
+	},
+	duplicate: async ({ params, locals }) => {
+		if (!locals.user) {
+			redirect(303, '/login');
+		}
+		const meta = getCollectionMeta(params.collection);
+		if (!meta) {
+			error(404, 'Unknown collection');
+		}
+		if (params.id === 'new') {
+			error(404, 'Not found');
+		}
+		const newId = await duplicateDocument(params.collection, params.id, meta.titleField);
+		if (!newId) {
+			error(404, 'Not found');
+		}
+		const copy = await getDocument(params.collection, newId);
+		const title = copy ? String(copy[meta.titleField] ?? '') || '(untitled)' : '(untitled)';
+		await logActivity(locals.user.email, 'Duplicated entry', `${meta.label}: ${title}`);
+		redirect(303, `/admin/${params.collection}/${newId}`);
 	}
 };

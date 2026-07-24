@@ -24,6 +24,24 @@ export const templates: Record<string, unknown> = {
 		files: [],
 		order: 0
 	},
+	events: {
+		title: '',
+		linkType: 'article',
+		href: '',
+		slug: '',
+		date: '',
+		endDate: '',
+		recurrence: { frequency: 'none', interval: 1, until: '' },
+		location: '',
+		summary: '',
+		image: '',
+		content: '',
+		tags: [],
+		teamMembers: [],
+		links: [],
+		gallery: [],
+		files: []
+	},
 	projects: {
 		title: '',
 		summary: '',

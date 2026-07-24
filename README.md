@@ -59,6 +59,7 @@ references, and conditional fields (`showWhen`). Slugs auto-generate from titles
 - **Files** — upload images/PDFs; usage indicators show whether a file is referenced anywhere, with a warning before deleting in-use files
 - **Links** — short codes that 302-redirect to a target URL (`/l/<slug>`)
 - **Snapshots** — archive a self-contained copy of a web page (inlined CSS, base64 images); served from `/admin/media/snapshot/<id>`. Uses Browserless when configured, otherwise a server fetch
+- **QR Codes** — generate a QR code from text or a URL, download it as a PNG, or save it straight to the media library
 
 ### Management
 
@@ -67,8 +68,12 @@ references, and conditional fields (`showWhen`). Slugs auto-generate from titles
 
 ## Content collections
 
-`siteInfo` (singleton), `news`, `projects`, `researchArticles`, `publications`, `team`,
+`siteInfo` (singleton), `news`, `events`, `projects`, `researchArticles`, `publications`, `team`,
 `sponsors`, `gallery`. Shapes mirror the website's data files in `../website/src/lib/ts`.
+
+Events can be duplicated from their edit page, can repeat on a daily/weekly/monthly/yearly
+schedule (`recurrence` field), and have a dedicated calendar view at `/admin/events/calendar`
+showing every event and occurrence for the month.
 
 For `team`, set `role` to `professor` for the lead and `member` for everyone else; `group` sets
 the heading (e.g. `Ph.D. Students`, `Alumni`). Social links support custom "Other" types with an

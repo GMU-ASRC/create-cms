@@ -258,6 +258,34 @@ export const schemas: Record<string, Field[]> = {
 		},
 		{ key: 'endDate', label: 'End date', type: 'date', help: 'Optional. For events that span multiple days.' },
 		{
+			key: 'recurrence',
+			label: 'Recurrence',
+			type: 'group',
+			fields: [
+				{
+					key: 'frequency',
+					label: 'Repeats',
+					type: 'select',
+					options: ['none', 'daily', 'weekly', 'monthly', 'yearly'],
+					help: 'How often this event repeats. Occurrences show up on the events calendar.'
+				},
+				{
+					key: 'interval',
+					label: 'Every',
+					type: 'number',
+					showWhen: { field: 'frequency', equals: ['daily', 'weekly', 'monthly', 'yearly'] },
+					help: 'Repeat every N days/weeks/months/years, e.g. 2 = every other week. Defaults to 1.'
+				},
+				{
+					key: 'until',
+					label: 'Repeat until',
+					type: 'date',
+					showWhen: { field: 'frequency', equals: ['daily', 'weekly', 'monthly', 'yearly'] },
+					help: 'Last date a repeat can fall on. Leave blank to repeat indefinitely.'
+				}
+			]
+		},
+		{
 			key: 'location',
 			label: 'Location',
 			type: 'text',

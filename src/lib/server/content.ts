@@ -141,6 +141,24 @@ export async function deleteDocument(key: string, id: string): Promise<void> {
 	await db.collection(key).deleteOne({ _id: new ObjectId(id) });
 }
 
+export async function duplicateDocument(
+	key: string,
+	id: string,
+	titleField: string
+): Promise<string | null> {
+	const original = await getDocument(key, id);
+	if (!original) return null;
+	const { id: _originalId, ...data } = original;
+	if (typeof data[titleField] === 'string' && data[titleField]) {
+		data[titleField] = `${data[titleField]} (Copy)`;
+	}
+	if (typeof data.slug === 'string' && data.slug) {
+		data.slug = `${data.slug}-copy-${randomSlug(6)}`;
+	}
+	delete data.order;
+	return createDocument(key, data);
+}
+
 type GalleryInput = { id?: string; image: string; title?: string; type?: string };
 
 export async function saveGallery(items: GalleryInput[]): Promise<void> {
