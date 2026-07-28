@@ -22,6 +22,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!meta) {
 		error(404, 'Unknown collection');
 	}
+	const listPath = listPathFor(params.collection);
+	if (listPath !== `/admin/${params.collection}`) {
+		redirect(303, listPath);
+	}
 	let documents = await listDocuments(params.collection);
 	if (params.collection === 'publications') {
 		const tags = tagsById(documents as unknown as RawPublication[]);
