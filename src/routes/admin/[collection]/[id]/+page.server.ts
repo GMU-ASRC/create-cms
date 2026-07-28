@@ -10,6 +10,7 @@ import {
 	findDocumentBySlug,
 	randomSlug
 } from '$lib/server/content';
+import { listPathFor } from '$lib/collections';
 import { templates } from '$lib/templates';
 import { schemaFor, applyAutoSlugs } from '$lib/schema';
 import { mirrorExternalFile } from '$lib/server/files';
@@ -91,7 +92,7 @@ export const actions: Actions = {
 		}
 		await updateDocument(params.collection, params.id, parsed);
 		await logActivity(locals.user.email, 'Updated entry', `${meta.label}: ${title}`);
-		redirect(303, `/admin/${params.collection}`);
+		redirect(303, listPathFor(params.collection));
 	},
 	delete: async ({ params, locals }) => {
 		if (!locals.user) {
@@ -108,7 +109,7 @@ export const actions: Actions = {
 				meta ? `${meta.label}: ${title}` : title
 			);
 		}
-		redirect(303, `/admin/${params.collection}`);
+		redirect(303, listPathFor(params.collection));
 	},
 	duplicate: async ({ params, locals }) => {
 		if (!locals.user) {

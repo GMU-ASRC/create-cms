@@ -19,12 +19,17 @@
 
 	const logoSrc = $derived(data.logo || '/create_logo.png');
 
+	const hiddenFromNav = new Set(['siteInfo', 'gallery', 'sponsors']);
+
 	const navItems = [
-		...collections.map((collection) => ({
-			label: collection.label,
-			href: `/admin/${collection.key}`,
-			icon: iconFor(collection.key)
-		})),
+		{ label: 'Site', href: '/admin/site', icon: iconFor('siteInfo') },
+		...collections
+			.filter((collection) => !hiddenFromNav.has(collection.key))
+			.map((collection) => ({
+				label: collection.label,
+				href: `/admin/${collection.key}`,
+				icon: iconFor(collection.key)
+			})),
 		{ label: 'Media', href: '/admin/media', icon: iconFor('media') },
 		{ label: 'Manage', href: '/admin/manage', icon: 'mdi:shield-account-outline' },
 		{ label: 'Profile', href: '/admin/profile', icon: 'mdi:account-cog-outline' }

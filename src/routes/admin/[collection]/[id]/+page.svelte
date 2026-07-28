@@ -3,6 +3,7 @@
 	import DocumentForm from '$lib/components/DocumentForm.svelte';
 	import { schemaFor } from '$lib/schema';
 	import { confirmSubmit } from '$lib/confirm';
+	import { listPathFor } from '$lib/collections';
 
 	let { data, form } = $props();
 
@@ -14,7 +15,7 @@
 <svelte:head><title>{isNew ? 'New' : 'Edit'} {meta.label} | CREATE CMS</title></svelte:head>
 
 <a
-	href={`/admin/${meta.key}`}
+	href={listPathFor(meta.key)}
 	class="inline-flex items-center gap-1 text-sm font-medium text-muted hover:text-gmu-green"
 >
 	<Icon icon="mdi:arrow-left" width="16" />

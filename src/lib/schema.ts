@@ -222,8 +222,7 @@ export const schemas: Record<string, Field[]> = {
 			type: 'files',
 			showWhen: { field: 'linkType', equals: 'article' },
 			help: 'Attach documents, datasets, or other downloadable files for this news article.'
-		},
-		{ key: 'order', label: 'Order', type: 'number' }
+		}
 	],
 	events: [
 		{ key: 'title', label: 'Title', type: 'text', required: true },

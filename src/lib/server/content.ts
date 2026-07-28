@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb';
 import { randomBytes } from 'node:crypto';
 import { getDb } from './db';
 import { collections } from '$lib/collections';
+import { eventIsPast } from '$lib/eventStatus';
 export { collections, getCollectionMeta } from '$lib/collections';
 
 type Document = Record<string, unknown> & { id: string };
@@ -23,22 +24,6 @@ export async function usedFileIds(): Promise<Set<string>> {
 function serialize(doc: Record<string, unknown>): Document {
 	const { _id, ...rest } = doc;
 	return { id: (_id as ObjectId).toString(), ...rest };
-}
-
-function eventDayNumber(value: unknown): number | null {
-	if (typeof value !== 'string' || !value.trim()) return null;
-	const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
-	if (!match) return null;
-	return Number(match[1]) * 10000 + Number(match[2]) * 100 + Number(match[3]);
-}
-
-function eventIsPast(doc: Record<string, unknown>): boolean {
-	const start = eventDayNumber(doc.date);
-	if (start === null) return false;
-	const end = eventDayNumber(doc.endDate) ?? start;
-	const now = new Date();
-	const today = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
-	return today > end;
 }
 
 function compareEvents(first: Document, second: Document): number {

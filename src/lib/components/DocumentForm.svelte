@@ -6,6 +6,7 @@
 	import EntryPreview from './EntryPreview.svelte';
 	import { ensureShape, type Field } from '$lib/schema';
 	import { confirmAction } from '$lib/confirm';
+	import { listPathFor } from '$lib/collections';
 
 	let {
 		fields,
@@ -84,7 +85,7 @@
 				Preview
 			</button>
 		{/if}
-		<a href={`/admin/${metaKey}`} class="btn-secondary">Cancel</a>
+		<a href={listPathFor(metaKey)} class="btn-secondary">Cancel</a>
 	</div>
 </form>
 

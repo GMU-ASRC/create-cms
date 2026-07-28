@@ -1,3 +1,5 @@
+import { eventStatus } from './eventStatus';
+
 export type ListDisplay = {
 	image?: string;
 	subtitle?: (doc: Record<string, any>) => string;
@@ -14,24 +16,6 @@ function formatDate(value: unknown): string {
 	if (typeof value !== 'string' || !value) return '';
 	const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
 	return match ? `${match[2]}/${match[3]}/${match[1]}` : value;
-}
-
-function dayNumber(value: unknown): number | null {
-	if (typeof value !== 'string') return null;
-	const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
-	if (!match) return null;
-	return Number(match[1]) * 10000 + Number(match[2]) * 100 + Number(match[3]);
-}
-
-function eventStatus(doc: Record<string, any>): string {
-	const start = dayNumber(doc.date);
-	if (start === null) return '';
-	const end = dayNumber(doc.endDate) ?? start;
-	const now = new Date();
-	const today = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
-	if (today < start) return 'Upcoming';
-	if (today > end) return 'Past';
-	return 'Ongoing';
 }
 
 function eventRange(doc: Record<string, any>): string {

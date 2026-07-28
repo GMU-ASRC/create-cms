@@ -21,8 +21,7 @@ export const templates: Record<string, unknown> = {
 		href: '',
 		slug: '',
 		gallery: [],
-		files: [],
-		order: 0
+		files: []
 	},
 	events: {
 		title: '',

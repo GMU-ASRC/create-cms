@@ -8,7 +8,7 @@ export type CollectionMeta = {
 
 export const collections: CollectionMeta[] = [
 	{ key: 'siteInfo', label: 'Site Info', titleField: 'labName', singleton: true },
-	{ key: 'news', label: 'News', titleField: 'title' },
+	{ key: 'news', label: 'News', titleField: 'title', sortBy: { field: 'date', direction: -1 } },
 	{ key: 'events', label: 'Events', titleField: 'title' },
 	{ key: 'projects', label: 'Projects', titleField: 'title' },
 	{ key: 'researchArticles', label: 'Research Articles', titleField: 'title' },
@@ -20,4 +20,14 @@ export const collections: CollectionMeta[] = [
 
 export function getCollectionMeta(key: string): CollectionMeta | undefined {
 	return collections.find((collection) => collection.key === key);
+}
+
+const siteHubKeys: Record<string, string> = {
+	siteInfo: '/admin/site/info',
+	gallery: '/admin/site/gallery',
+	sponsors: '/admin/site/sponsors'
+};
+
+export function listPathFor(key: string): string {
+	return siteHubKeys[key] ?? `/admin/${key}`;
 }

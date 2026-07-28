@@ -7,6 +7,7 @@ import {
 	updateDocument,
 	reorderDocuments
 } from '$lib/server/content';
+import { listPathFor } from '$lib/collections';
 import { templates } from '$lib/templates';
 import { schemaFor } from '$lib/schema';
 import { mirrorExternalFileResult } from '$lib/server/files';
@@ -61,7 +62,7 @@ export const actions: Actions = {
 			await createDocument(params.collection, parsed);
 		}
 		await logActivity(locals.user.email, 'Updated entry', meta.label);
-		redirect(303, `/admin/${params.collection}`);
+		redirect(303, listPathFor(params.collection));
 	},
 	mirrorPdfs: async ({ params, locals }) => {
 		if (!locals.user) {
