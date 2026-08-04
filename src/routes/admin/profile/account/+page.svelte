@@ -4,12 +4,7 @@
 	let { data, form } = $props();
 </script>
 
-<svelte:head><title>Profile | CREATE CMS</title></svelte:head>
-
-<h1 class="page-title">Profile</h1>
-<p class="page-subtitle">Update your login email and password.</p>
-
-<form method="POST" action="?/email" class="card mt-6 space-y-4 p-5">
+<form method="POST" action="?/email" class="card space-y-4 p-5">
 	<div class="flex items-center gap-2.5">
 		<Icon icon="mdi:email-outline" width="22" class="text-slate-400" />
 		<h2 class="text-base font-semibold text-slate-900">Login email</h2>
