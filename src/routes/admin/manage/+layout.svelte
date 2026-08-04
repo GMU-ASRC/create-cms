@@ -7,7 +7,8 @@
 	const tabs = [
 		{ label: 'Users', href: '/admin/manage/users', icon: 'mdi:account-key-outline' },
 		{ label: 'Activity', href: '/admin/manage/activity', icon: 'mdi:history' },
-		{ label: 'Storage', href: '/admin/manage/storage', icon: 'mdi:database-outline' }
+		{ label: 'Storage', href: '/admin/manage/storage', icon: 'mdi:database-outline' },
+		{ label: 'Analytics', href: '/admin/manage/analytics', icon: 'mdi:chart-line' }
 	];
 </script>
 

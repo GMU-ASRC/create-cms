@@ -14,5 +14,8 @@ export default defineConfig({
 
 			adapter: adapter()
 		})
-	]
+	],
+	optimizeDeps: {
+		exclude: ['maplibre-gl', 'svelte-maplibre-gl']
+	}
 });
