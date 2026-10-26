@@ -113,6 +113,7 @@
 			{
 				id: '64f1a2b3c4d5e6f7a8b9c128',
 				type: 'Conference Paper',
+				number: 1,
 				title: 'Decentralized Task Allocation for Robot Swarms',
 				authors: 'J. Doe, A. Smith',
 				venue: 'ICRA 2026',

@@ -15,6 +15,7 @@ import { templates } from '$lib/templates';
 import { schemaFor, applyAutoSlugs } from '$lib/schema';
 import { mirrorExternalFile } from '$lib/server/files';
 import { logActivity } from '$lib/server/activity';
+import { applyPublicationNumber, publicationNumberFor } from '$lib/server/publicationNumbers';
 
 async function mirrorFileFields(collection: string, data: Record<string, unknown>): Promise<void> {
 	for (const field of schemaFor(collection)) {
@@ -42,6 +43,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		error(404, 'Not found');
 	}
 	const { id, ...rest } = doc;
+	if (params.collection === 'publications') {
+		rest.number = await publicationNumberFor(id);
+	}
 	return { meta, doc: rest, isNew: false };
 };
 
@@ -80,6 +84,14 @@ export const actions: Actions = {
 					});
 				}
 				await updateDocument(params.collection, conflict.id, { slug: randomSlug() });
+			}
+		}
+
+		if (params.collection === 'publications') {
+			const currentId = params.id === 'new' ? null : params.id;
+			const numberError = await applyPublicationNumber(currentId, parsed);
+			if (numberError) {
+				return fail(400, { error: numberError, json: raw });
 			}
 		}
 

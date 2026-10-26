@@ -173,6 +173,7 @@
 {:else if field.type === 'number'}
 	<div>
 		<label class="field-label" for={field.key}>{field.label}{@render req()}</label>
+		{#if field.help}<p class="mt-1 mb-2 text-xs text-muted">{field.help}</p>{/if}
 		<input id={field.key} type="number" class="field-input sm:max-w-40" bind:value={container[field.key]} />
 	</div>
 {:else if field.type === 'boolean'}

@@ -73,6 +73,7 @@ export const templates: Record<string, unknown> = {
 	},
 	publications: {
 		type: 'Journal Articles',
+		number: 0,
 		title: '',
 		authors: '',
 		venue: '',

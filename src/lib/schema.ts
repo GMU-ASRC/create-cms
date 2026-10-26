@@ -12,7 +12,7 @@ export type Field = { showWhen?: FieldCondition; helpLink?: { url: string; label
 			placeholder?: string;
 			autoSlugFrom?: string;
 	  }
-	| { key: string; label: string; type: 'number'; required?: boolean }
+	| { key: string; label: string; type: 'number'; help?: string; required?: boolean }
 	| { key: string; label: string; type: 'boolean'; help?: string; default?: boolean }
 	| { key: string; label: string; type: 'select'; options: string[]; help?: string; required?: boolean }
 	| { key: string; label: string; type: 'stringList'; itemLabel?: string; help?: string; required?: boolean }
@@ -494,6 +494,12 @@ export const schemas: Record<string, Field[]> = {
 			options: publicationTypeLabels,
 			required: true,
 			help: 'Sets the numbering prefix and the section on the website.'
+		},
+		{
+			key: 'number',
+			label: 'Number',
+			type: 'number',
+			help: 'The number after the prefix, e.g. 7 for J-7. Using a number another publication already has swaps the two. Leave as 0 to use the next available number.'
 		},
 		{ key: 'title', label: 'Title', type: 'text', required: true },
 		{ key: 'authors', label: 'Authors', type: 'text', required: true },
